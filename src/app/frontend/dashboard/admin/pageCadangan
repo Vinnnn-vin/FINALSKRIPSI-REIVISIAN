@@ -1,0 +1,2037 @@
+// /* eslint-disable react/no-unescaped-entities */
+// /* eslint-disable @typescript-eslint/no-unused-vars */
+// /* eslint-disable @typescript-eslint/no-explicit-any */
+// // app/frontend/dashboard/admin/page.tsx
+// "use client"
+
+// import { useState, useEffect } from "react";
+// import {
+//   Container,
+//   Grid,
+//   Card,
+//   Text,
+//   Title,
+//   Group,
+//   Stack,
+//   Button,
+//   Modal,
+//   TextInput,
+//   Select,
+//   Table,
+//   Badge,
+//   ActionIcon,
+//   Tabs,
+//   Switch,
+//   Avatar,
+//   Paper,
+//   SimpleGrid,
+//   Loader,
+//   Alert,
+//   Box,
+//   Progress,
+//   Divider,
+//   ThemeIcon,
+//   NumberInput,
+//   Textarea,
+//   Notification,
+//   ScrollArea,
+//   Center,
+//   RingProgress,
+//   Tooltip,
+// } from "@mantine/core";
+// import { useDisclosure } from "@mantine/hooks";
+// import { notifications } from "@mantine/notifications";
+// import {
+//   IconUsers,
+//   IconBook,
+//   IconUserCheck,
+//   IconTrendingUp,
+//   IconEdit,
+//   IconTrash,
+//   IconEye,
+//   IconChartBar,
+//   IconSchool,
+//   IconCoin,
+//   IconRefresh,
+//   IconAlertTriangle,
+//   IconKey,
+//   IconUserPlus,
+//   IconMail,
+//   IconCalendar,
+//   IconChartLine,
+//   IconDashboard,
+//   IconSearch,
+//   IconFilter,
+//   IconDownload,
+//   IconArrowUp,
+//   IconArrowDown,
+//   IconBulb,
+//   IconClock,
+//   IconCheck,
+//   IconX,
+//   IconInfoCircle,
+//   IconAdjustments,
+//   IconDatabase,
+// } from "@tabler/icons-react";
+// import {
+//   XAxis,
+//   YAxis,
+//   CartesianGrid,
+//   Tooltip as RechartsTooltip,
+//   Legend,
+//   ResponsiveContainer,
+//   BarChart,
+//   Bar,
+//   PieChart,
+//   Pie,
+//   Cell,
+//   AreaChart,
+//   Area,
+//   LineChart,
+//   Line,
+// } from "recharts";
+
+// // --- UNIFIED INTERFACES ---
+// interface DashboardStats {
+//   totalCourses: number;
+//   publishedCourses: number;
+//   unpublishedCourses: number;
+//   totalStudents: number;
+//   totalLecturers: number;
+//   totalEnrollments: number;
+//   recentEnrollments: number;
+//   categoryAnalytics: Array<{
+//     category_name: string;
+//     course_count: number;
+//     enrollment_count: number;
+//   }>;
+//   paymentSummary: Array<{
+//     status: string;
+//     count: number;
+//     total_amount: number;
+//   }>;
+//   enrollmentTrends: Array<{
+//     month: string;
+//     enrollments: number;
+//   }>;
+// }
+
+// interface User {
+//   user_id: number;
+//   first_name: string;
+//   last_name: string;
+//   email: string;
+//   role: string;
+//   created_at: string;
+// }
+
+// interface Course {
+//   course_id: number;
+//   course_title: string;
+//   course_description: string;
+//   course_level: string;
+//   course_price: number;
+//   publish_status: number;
+//   user_id: number;
+//   category_id: number;
+//   created_at: string;
+//   instructor?: {
+//     first_name: string;
+//     last_name: string;
+//   };
+//   category?: {
+//     category_name: string;
+//   };
+//   // Support for both naming conventions
+//   User?: {
+//     first_name: string;
+//     last_name: string;
+//   };
+//   Category?: {
+//     category_name: string;
+//   };
+// }
+
+// interface Payment {
+//   payment_id: number;
+//   amount: number;
+//   status: string;
+//   payment_method: string;
+//   created_at: string;
+//   user?: {
+//     first_name: string;
+//     last_name: string;
+//     email: string;
+//   };
+//   course?: {
+//     course_title: string;
+//   };
+//   // Support for both naming conventions
+//   User?: {
+//     first_name: string;
+//     last_name: string;
+//     email: string;
+//   };
+//   Course?: {
+//     course_title: string;
+//   };
+// }
+
+// interface EnrollmentData {
+//   enrollment_id: number;
+//   status: string;
+//   created_at: string;
+//   student?: {
+//     first_name: string;
+//     last_name: string;
+//     email: string;
+//   };
+//   course?: {
+//     course_title: string;
+//     course_level: string;
+//     category?: {
+//       category_name: string;
+//     };
+//   };
+//   // Support for both naming conventions
+//   User?: {
+//     first_name: string;
+//     last_name: string;
+//     email: string;
+//   };
+//   Course?: {
+//     course_title: string;
+//     course_level: string;
+//     Category?: {
+//       category_name: string;
+//     };
+//   };
+// }
+
+// const AdminDashboard = () => {
+//   const [stats, setStats] = useState<DashboardStats | null>(null);
+//   const [users, setUsers] = useState<User[]>([]);
+//   const [courses, setCourses] = useState<Course[]>([]);
+//   const [payments, setPayments] = useState<Payment[]>([]);
+//   const [enrollments, setEnrollments] = useState<EnrollmentData[]>([]);
+//   const [loading, setLoading] = useState(true);
+//   const [refreshing, setRefreshing] = useState(false);
+//   const [activeTab, setActiveTab] = useState("overview");
+
+//   // Search and filter states
+//   const [searchTerm, setSearchTerm] = useState("");
+//   const [filterRole, setFilterRole] = useState<string | null>(null);
+//   const [filterStatus, setFilterStatus] = useState<string | null>(null);
+//   const [sortField, setSortField] = useState<string | null>(null);
+//   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+
+//   // Pagination states
+//   const [currentPage, setCurrentPage] = useState(1);
+//   const [itemsPerPage] = useState(10);
+
+//   const [userModalOpened, { open: openUserModal, close: closeUserModal }] =
+//     useDisclosure(false);
+//   const [
+//     deleteModalOpened,
+//     { open: openDeleteModal, close: closeDeleteModal },
+//   ] = useDisclosure(false);
+//   const [
+//     courseModalOpened,
+//     { open: openCourseModal, close: closeCourseModal },
+//   ] = useDisclosure(false);
+
+//   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+//   const [userToDelete, setUserToDelete] = useState<User | null>(null);
+//   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+
+//   const [userFormData, setUserFormData] = useState({
+//     first_name: "",
+//     last_name: "",
+//     email: "",
+//     role: "",
+//     password: "",
+//   });
+
+//   const [courseFormData, setCourseFormData] = useState({
+//     course_title: "",
+//     course_description: "",
+//     course_level: "",
+//     course_price: 0,
+//     publish_status: 0,
+//     category_id: 1,
+//   });
+
+//   const COLORS = [
+//     "#0088FE",
+//     "#00C49F",
+//     "#FFBB28",
+//     "#FF8042",
+//     "#8884d8",
+//     "#82ca9d",
+//   ];
+
+//   useEffect(() => {
+//     fetchDashboardData();
+//   }, []);
+
+//   const fetchDashboardData = async (showLoading = true) => {
+//     try {
+//       if (showLoading) {
+//         setLoading(true);
+//       } else {
+//         setRefreshing(true);
+//       }
+
+//       const [statsRes, usersRes, coursesRes, paymentsRes, enrollmentsRes] =
+//         await Promise.all([
+//           fetch("/api/dashboard/admin/stats"),
+//           fetch("/api/dashboard/admin/users"),
+//           fetch("/api/dashboard/admin/courses"),
+//           fetch("/api/dashboard/admin/payment"), 
+//           fetch("/api/dashboard/admin/enrollments"),
+//         ]);
+
+//       if (statsRes.ok) {
+//         const statsData = await statsRes.json();
+//         setStats(statsData);
+//       }
+
+//       if (usersRes.ok) {
+//         const usersData = await usersRes.json();
+//         setUsers(usersData);
+//       }
+
+//       if (coursesRes.ok) {
+//         const coursesData = await coursesRes.json();
+//         setCourses(coursesData);
+//       }
+
+//       if (paymentsRes.ok) {
+//         const paymentsData = await paymentsRes.json();
+//         setPayments(paymentsData.payments || []);
+//       }
+
+//       if (enrollmentsRes.ok) {
+//         const enrollmentsData = await enrollmentsRes.json();
+//         setEnrollments(enrollmentsData.enrollments || []);
+//       }
+//     } catch (error) {
+//       notifications.show({
+//         title: "Error",
+//         message: "Failed to fetch dashboard data",
+//         color: "red",
+//         icon: <IconAlertTriangle size={16} />,
+//       });
+//     } finally {
+//       setLoading(false);
+//       setRefreshing(false);
+//     }
+//   };
+
+//   const handleUserEdit = (user: User) => {
+//     setSelectedUser(user);
+//     setUserFormData({
+//       first_name: user.first_name,
+//       last_name: user.last_name,
+//       email: user.email,
+//       role: user.role,
+//       password: "",
+//     });
+//     openUserModal();
+//   };
+
+//   const handleUserSave = async () => {
+//     try {
+//       if (!selectedUser) return;
+
+//       const response = await fetch(
+//         `/api/dashboard/admin/users/${selectedUser.user_id}`,
+//         {
+//           method: "PUT",
+//           headers: { "Content-Type": "application/json" },
+//           body: JSON.stringify({
+//             first_name: userFormData.first_name,
+//             last_name: userFormData.last_name,
+//             email: userFormData.email,
+//             role: userFormData.role,
+//           }),
+//         }
+//       );
+
+//       if (response.ok) {
+//         notifications.show({
+//           title: "Success",
+//           message: "User updated successfully",
+//           color: "green",
+//           icon: <IconCheck size={16} />,
+//         });
+//         fetchDashboardData(false);
+//         closeUserModal();
+//         setSelectedUser(null);
+//       } else {
+//         const errorData = await response.json();
+//         throw new Error(errorData.error || "Failed to update user");
+//       }
+//     } catch (error: any) {
+//       notifications.show({
+//         title: "Error",
+//         message: error.message || "Failed to update user",
+//         color: "red",
+//         icon: <IconX size={16} />,
+//       });
+//     }
+//   };
+
+//   const handleUserCreate = async () => {
+//     try {
+//       if (
+//         !userFormData.first_name ||
+//         !userFormData.last_name ||
+//         !userFormData.email ||
+//         !userFormData.role ||
+//         !userFormData.password
+//       ) {
+//         notifications.show({
+//           title: "Validation Error",
+//           message: "Please fill in all required fields",
+//           color: "red",
+//           icon: <IconAlertTriangle size={16} />,
+//         });
+//         return;
+//       }
+
+//       const response = await fetch("/api/dashboard/admin/users", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify(userFormData),
+//       });
+
+//       if (response.ok) {
+//         notifications.show({
+//           title: "Success",
+//           message: "User created successfully",
+//           color: "green",
+//           icon: <IconCheck size={16} />,
+//         });
+//         fetchDashboardData(false);
+//         closeUserModal();
+//         resetUserForm();
+//       } else {
+//         const error = await response.json();
+//         throw new Error(error.error || "Failed to create user");
+//       }
+//     } catch (error: any) {
+//       notifications.show({
+//         title: "Error",
+//         message: error.message || "Failed to create user",
+//         color: "red",
+//         icon: <IconX size={16} />,
+//       });
+//     }
+//   };
+
+//   const handleCourseStatusToggle = async (
+//     courseId: number,
+//     currentStatus: number
+//   ) => {
+//     try {
+//       const response = await fetch(
+//         `/api/dashboard/admin/courses/${courseId}/status`,
+//         {
+//           method: "PUT",
+//           headers: { "Content-Type": "application/json" },
+//           body: JSON.stringify({ publish_status: currentStatus === 1 ? 0 : 1 }),
+//         }
+//       );
+
+//       if (response.ok) {
+//         notifications.show({
+//           title: "Success",
+//           message: "Course status updated successfully",
+//           color: "green",
+//           icon: <IconCheck size={16} />,
+//         });
+//         fetchDashboardData(false);
+//       } else {
+//         throw new Error("Failed to update course status");
+//       }
+//     } catch (error) {
+//       notifications.show({
+//         title: "Error",
+//         message: "Failed to update course status",
+//         color: "red",
+//         icon: <IconX size={16} />,
+//       });
+//     }
+//   };
+
+//   const resetUserPassword = async (userId: number) => {
+//     try {
+//       const response = await fetch(
+//         `/api/dashboard/admin/users/${userId}/reset-password`,
+//         {
+//           method: "POST",
+//         }
+//       );
+
+//       if (response.ok) {
+//         const data = await response.json();
+//         notifications.show({
+//           title: "Password Reset Successful",
+//           message: `Temporary password: ${data.tempPassword}. Please inform the user.`,
+//           color: "green",
+//           autoClose: 15000,
+//           icon: <IconKey size={16} />,
+//         });
+//       } else {
+//         throw new Error("Failed to reset password");
+//       }
+//     } catch (error) {
+//       notifications.show({
+//         title: "Error",
+//         message: "Failed to reset password",
+//         color: "red",
+//         icon: <IconX size={16} />,
+//       });
+//     }
+//   };
+
+//   const handleUserDelete = async () => {
+//     try {
+//       if (!userToDelete) return;
+
+//       const response = await fetch(
+//         `/api/dashboard/admin/users/${userToDelete.user_id}`,
+//         {
+//           method: "DELETE",
+//         }
+//       );
+
+//       if (response.ok) {
+//         notifications.show({
+//           title: "Success",
+//           message: "User deleted successfully",
+//           color: "green",
+//           icon: <IconCheck size={16} />,
+//         });
+//         fetchDashboardData(false);
+//         closeDeleteModal();
+//         setUserToDelete(null);
+//       } else {
+//         throw new Error("Failed to delete user");
+//       }
+//     } catch (error) {
+//       notifications.show({
+//         title: "Error",
+//         message: "Failed to delete user",
+//         color: "red",
+//         icon: <IconX size={16} />,
+//       });
+//     }
+//   };
+
+//   const openAddUserModal = () => {
+//     setSelectedUser(null);
+//     resetUserForm();
+//     openUserModal();
+//   };
+
+//   const resetUserForm = () => {
+//     setUserFormData({
+//       first_name: "",
+//       last_name: "",
+//       email: "",
+//       role: "",
+//       password: "",
+//     });
+//   };
+
+//   const openDeleteUserModal = (user: User) => {
+//     setUserToDelete(user);
+//     openDeleteModal();
+//   };
+
+//   const getStatusColor = (status: string) => {
+//     switch (status?.toLowerCase()) {
+//       case "active":
+//       case "completed":
+//       case "paid":
+//       case "published":
+//         return "green";
+//       case "pending":
+//       case "enrolled":
+//         return "yellow";
+//       case "failed":
+//       case "cancelled":
+//         return "red";
+//       case "suspended":
+//       case "dropped":
+//         return "orange";
+//       default:
+//         return "gray";
+//     }
+//   };
+
+//   const filteredUsers = users.filter((user) => {
+//     const matchesSearch =
+//       user.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+//       user.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+//       user.email.toLowerCase().includes(searchTerm.toLowerCase());
+
+//     const matchesRole = !filterRole || user.role === filterRole;
+
+//     return matchesSearch && matchesRole;
+//   });
+
+//   const filteredCourses = courses.filter((course) => {
+//     const matchesSearch =
+//       course.course_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+//       (course.course_description || "")
+//         .toLowerCase()
+//         .includes(searchTerm.toLowerCase());
+
+//     const matchesStatus =
+//       !filterStatus ||
+//       (filterStatus === "published" && course.publish_status === 1) ||
+//       (filterStatus === "draft" && course.publish_status === 0);
+
+//     return matchesSearch && matchesStatus;
+//   });
+
+//   const calculateMetrics = () => {
+//     if (!stats) return {};
+
+//     const enrollmentRate =
+//       stats.totalCourses > 0
+//         ? (stats.totalEnrollments / stats.totalCourses).toFixed(2)
+//         : 0;
+
+//     const publishRate =
+//       stats.totalCourses > 0
+//         ? ((stats.publishedCourses / stats.totalCourses) * 100).toFixed(1)
+//         : 0;
+
+//     const averageEnrollmentPerCourse =
+//       stats.totalCourses > 0
+//         ? Math.round(stats.totalEnrollments / stats.totalCourses)
+//         : 0;
+
+//     return {
+//       enrollmentRate,
+//       publishRate,
+//       averageEnrollmentPerCourse,
+//     };
+//   };
+
+//   const metrics = calculateMetrics();
+
+//   // Export functionality
+//   const exportData = (type: string) => {
+//     let data: any[] = [];
+//     let filename = "";
+
+//     switch (type) {
+//       case "users":
+//         data = users;
+//         filename = "users_export.csv";
+//         break;
+//       case "courses":
+//         data = courses;
+//         filename = "courses_export.csv";
+//         break;
+//       case "enrollments":
+//         data = enrollments;
+//         filename = "enrollments_export.csv";
+//         break;
+//       default:
+//         return;
+//     }
+
+//     if (data.length === 0) {
+//       notifications.show({
+//         title: "No Data",
+//         message: "No data available to export",
+//         color: "yellow",
+//         icon: <IconInfoCircle size={16} />,
+//       });
+//       return;
+//     }
+
+//     notifications.show({
+//       title: "Export Started",
+//       message: `Exporting ${data.length} records...`,
+//       color: "blue",
+//       icon: <IconDownload size={16} />,
+//     });
+//   };
+
+//   // Helper function to get instructor name with fallback
+//   const getInstructorName = (course: Course) => {
+//     if (course.instructor) {
+//       return `${course.instructor.first_name} ${course.instructor.last_name}`;
+//     }
+//     if (course.User) {
+//       return `${course.User.first_name} ${course.User.last_name}`;
+//     }
+//     return "Unassigned";
+//   };
+
+//   // Helper function to get category name with fallback
+//   const getCategoryName = (course: Course) => {
+//     if (course.category) {
+//       return course.category.category_name;
+//     }
+//     if (course.Category) {
+//       return course.Category.category_name;
+//     }
+//     return "Uncategorized";
+//   };
+
+//   // Helper function for user names with fallback
+//   const getUserName = (user: any) => {
+//     if (user?.first_name && user?.last_name) {
+//       return `${user.first_name} ${user.last_name}`;
+//     }
+//     return "Unknown User";
+//   };
+
+//   if (loading) {
+//     return (
+//       <Container size="xl" py="xl">
+//         <Center style={{ minHeight: 400 }}>
+//           <Stack align="center" gap="md">
+//             <Loader size="xl" variant="bars" />
+//             <Text size="lg" fw={500}>
+//               Loading admin dashboard...
+//             </Text>
+//             <Text size="sm" c="dimmed">
+//               Please wait while we fetch the latest data
+//             </Text>
+//           </Stack>
+//         </Center>
+//       </Container>
+//     );
+//   }
+
+//   if (!stats) {
+//     return (
+//       <Container size="xl" py="xl">
+//         <Alert
+//           icon={<IconAlertTriangle size={16} />}
+//           title="Dashboard Error"
+//           color="red"
+//           variant="filled"
+//         >
+//           <Text mb="md">
+//             Failed to load dashboard data. This could be due to a network issue
+//             or server problem.
+//           </Text>
+//           <Button
+//             variant="white"
+//             size="sm"
+//             onClick={() => fetchDashboardData()}
+//             leftSection={<IconRefresh size={16} />}
+//           >
+//             Retry Loading
+//           </Button>
+//         </Alert>
+//       </Container>
+//     );
+//   }
+
+//   return (
+//     <Container size="xl" py="xl">
+//       {/* Enhanced Header */}
+//       <Card shadow="sm" padding="lg" radius="md" withBorder mb="xl">
+//         <Group justify="space-between">
+//           <Group>
+//             <ThemeIcon
+//               size={50}
+//               radius="md"
+//               variant="gradient"
+//               gradient={{ from: "blue", to: "cyan" }}
+//             >
+//               <IconDashboard size={28} />
+//             </ThemeIcon>
+//             <div>
+//               <Title order={1} size="h2">
+//                 Admin Dashboard
+//               </Title>
+//               <Text c="dimmed" size="sm">
+//                 Comprehensive platform management and analytics
+//               </Text>
+//               <Text size="xs" c="dimmed">
+//                 Last updated: {new Date().toLocaleDateString()} at{" "}
+//                 {new Date().toLocaleTimeString()}
+//               </Text>
+//             </div>
+//           </Group>
+//           <Group>
+//             <Button
+//               leftSection={<IconDownload size={16} />}
+//               variant="light"
+//               onClick={() => exportData("users")}
+//             >
+//               Export Data
+//             </Button>
+//             <Button
+//               leftSection={<IconRefresh size={16} />}
+//               onClick={() => fetchDashboardData(false)}
+//               loading={refreshing}
+//               variant="filled"
+//             >
+//               {refreshing ? "Refreshing..." : "Refresh"}
+//             </Button>
+//           </Group>
+//         </Group>
+//       </Card>
+
+//       <Tabs value={activeTab} onChange={setActiveTab} mb="xl">
+//         <Tabs.List grow>
+//           <Tabs.Tab value="overview" leftSection={<IconChartBar size={16} />}>
+//             Overview
+//           </Tabs.Tab>
+//           <Tabs.Tab
+//             value="users"
+//             leftSection={<IconUsers size={16} />}
+//             rightSection={
+//               <Badge size="xs" variant="filled" color="blue">
+//                 {users.length}
+//               </Badge>
+//             }
+//           >
+//             Users
+//           </Tabs.Tab>
+//           <Tabs.Tab
+//             value="courses"
+//             leftSection={<IconBook size={16} />}
+//             rightSection={
+//               <Badge size="xs" variant="filled" color="green">
+//                 {courses.length}
+//               </Badge>
+//             }
+//           >
+//             Courses
+//           </Tabs.Tab>
+//           <Tabs.Tab
+//             value="enrollments"
+//             leftSection={<IconUserCheck size={16} />}
+//             rightSection={
+//               <Badge size="xs" variant="filled" color="orange">
+//                 {enrollments.length}
+//               </Badge>
+//             }
+//           >
+//             Enrollments
+//           </Tabs.Tab>
+//           <Tabs.Tab
+//             value="payments"
+//             leftSection={<IconCoin size={16} />}
+//             rightSection={
+//               <Badge size="xs" variant="filled" color="violet">
+//                 {payments.length}
+//               </Badge>
+//             }
+//           >
+//             Payments
+//           </Tabs.Tab>
+//           <Tabs.Tab
+//             value="analytics"
+//             leftSection={<IconTrendingUp size={16} />}
+//           >
+//             Analytics
+//           </Tabs.Tab>
+//         </Tabs.List>
+
+//         {/* Enhanced Overview Panel */}
+//         <Tabs.Panel value="overview">
+//           <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} mb="xl" spacing="lg">
+//             <Card shadow="sm" padding="xl" radius="md" withBorder>
+//               <Group justify="space-between" mb="xs">
+//                 <Text fw={500} size="sm" c="dimmed">
+//                   Total Courses
+//                 </Text>
+//                 <ThemeIcon size={40} radius="md" color="blue" variant="light">
+//                   <IconBook size={20} />
+//                 </ThemeIcon>
+//               </Group>
+//               <Text size="xl" fw={700} c="blue" mb="xs">
+//                 {stats.totalCourses.toLocaleString()}
+//               </Text>
+//               <Group gap="xs" mb="sm">
+//                 <Text size="sm" c="green">
+//                   {stats.publishedCourses} published
+//                 </Text>
+//                 <Text size="sm" c="dimmed">
+//                   •
+//                 </Text>
+//                 <Text size="sm" c="orange">
+//                   {stats.unpublishedCourses} draft
+//                 </Text>
+//               </Group>
+//               <Progress
+//                 value={
+//                   stats.totalCourses > 0
+//                     ? (stats.publishedCourses / stats.totalCourses) * 100
+//                     : 0
+//                 }
+//                 size="sm"
+//                 color="blue"
+//                 radius="xl"
+//               />
+//               <Text size="xs" c="dimmed" mt="xs">
+//                 {metrics.publishRate}% published
+//               </Text>
+//             </Card>
+
+//             <Card shadow="sm" padding="xl" radius="md" withBorder>
+//               <Group justify="space-between" mb="xs">
+//                 <Text fw={500} size="sm" c="dimmed">
+//                   Students
+//                 </Text>
+//                 <ThemeIcon size={40} radius="md" color="green" variant="light">
+//                   <IconUsers size={20} />
+//                 </ThemeIcon>
+//               </Group>
+//               <Text size="xl" fw={700} c="green" mb="xs">
+//                 {stats.totalStudents.toLocaleString()}
+//               </Text>
+//               <Text size="sm" c="dimmed" mb="sm">
+//                 Active learners on platform
+//               </Text>
+//               <Group gap="xs">
+//                 <IconTrendingUp size={14} color="green" />
+//                 <Text size="xs" c="green">
+//                   Growing community
+//                 </Text>
+//               </Group>
+//             </Card>
+
+//             <Card shadow="sm" padding="xl" radius="md" withBorder>
+//               <Group justify="space-between" mb="xs">
+//                 <Text fw={500} size="sm" c="dimmed">
+//                   Lecturers
+//                 </Text>
+//                 <ThemeIcon size={40} radius="md" color="orange" variant="light">
+//                   <IconSchool size={20} />
+//                 </ThemeIcon>
+//               </Group>
+//               <Text size="xl" fw={700} c="orange" mb="xs">
+//                 {stats.totalLecturers.toLocaleString()}
+//               </Text>
+//               <Text size="sm" c="dimmed" mb="sm">
+//                 Content creators
+//               </Text>
+//               <Text size="xs" c="dimmed">
+//                 Avg{" "}
+//                 {stats.totalLecturers > 0
+//                   ? Math.round(stats.totalCourses / stats.totalLecturers)
+//                   : 0}{" "}
+//                 courses per lecturer
+//               </Text>
+//             </Card>
+
+//             <Card shadow="sm" padding="xl" radius="md" withBorder>
+//               <Group justify="space-between" mb="xs">
+//                 <Text fw={500} size="sm" c="dimmed">
+//                   Total Enrollments
+//                 </Text>
+//                 <ThemeIcon size={40} radius="md" color="violet" variant="light">
+//                   <IconUserCheck size={20} />
+//                 </ThemeIcon>
+//               </Group>
+//               <Text size="xl" fw={700} c="violet" mb="xs">
+//                 {stats.totalEnrollments.toLocaleString()}
+//               </Text>
+//               <Group gap="xs" mb="sm">
+//                 <IconClock size={14} />
+//                 <Text size="sm" c="dimmed">
+//                   {stats.recentEnrollments} this month
+//                 </Text>
+//               </Group>
+//               <Text size="xs" c="dimmed">
+//                 {metrics.enrollmentRate} avg per course
+//               </Text>
+//             </Card>
+//           </SimpleGrid>
+
+//           {/* Enhanced Charts Section */}
+//           <Grid>
+//             <Grid.Col span={{ base: 12, lg: 8 }}>
+//               <Card shadow="sm" padding="lg" radius="md" withBorder>
+//                 <Group justify="space-between" mb="md">
+//                   <div>
+//                     <Title size="h3">Enrollment Trends</Title>
+//                     <Text size="sm" c="dimmed">
+//                       Monthly enrollment patterns over time
+//                     </Text>
+//                   </div>
+//                   <Group>
+//                     <IconChartLine size={20} />
+//                     <Badge variant="light" color="blue">
+//                       Last 6 months
+//                     </Badge>
+//                   </Group>
+//                 </Group>
+//                 <ResponsiveContainer width="100%" height={350}>
+//                   <AreaChart data={stats.enrollmentTrends}>
+//                     <defs>
+//                       <linearGradient
+//                         id="colorEnrollments"
+//                         x1="0"
+//                         y1="0"
+//                         x2="0"
+//                         y2="1"
+//                       >
+//                         <stop
+//                           offset="5%"
+//                           stopColor="#339af0"
+//                           stopOpacity={0.8}
+//                         />
+//                         <stop
+//                           offset="95%"
+//                           stopColor="#339af0"
+//                           stopOpacity={0}
+//                         />
+//                       </linearGradient>
+//                     </defs>
+//                     <CartesianGrid strokeDasharray="3 3" />
+//                     <XAxis dataKey="month" />
+//                     <YAxis />
+//                     <RechartsTooltip
+//                       contentStyle={{
+//                         backgroundColor: "#fff",
+//                         border: "1px solid #e9ecef",
+//                         borderRadius: "8px",
+//                       }}
+//                     />
+//                     <Area
+//                       type="monotone"
+//                       dataKey="enrollments"
+//                       stroke="#339af0"
+//                       fillOpacity={1}
+//                       fill="url(#colorEnrollments)"
+//                     />
+//                   </AreaChart>
+//                 </ResponsiveContainer>
+//               </Card>
+//             </Grid.Col>
+
+//             <Grid.Col span={{ base: 12, lg: 4 }}>
+//               <Card shadow="sm" padding="lg" radius="md" withBorder h="100%">
+//                 <div>
+//                   <Title size="h3" mb="xs">
+//                     Course Distribution
+//                   </Title>
+//                   <Text size="sm" c="dimmed" mb="md">
+//                     By category
+//                   </Text>
+//                 </div>
+//                 <ResponsiveContainer width="100%" height={300}>
+//                   <PieChart>
+//                     <Pie
+//                       data={stats.categoryAnalytics}
+//                       cx="50%"
+//                       cy="50%"
+//                       labelLine={false}
+//                       label={({ category_name, course_count }) =>
+//                         `${category_name}: ${course_count}`
+//                       }
+//                       outerRadius={80}
+//                       fill="#8884d8"
+//                       dataKey="course_count"
+//                     >
+//                       {stats.categoryAnalytics.map((entry, index) => (
+//                         <Cell
+//                           key={`cell-${index}`}
+//                           fill={COLORS[index % COLORS.length]}
+//                         />
+//                       ))}
+//                     </Pie>
+//                     <RechartsTooltip />
+//                   </PieChart>
+//                 </ResponsiveContainer>
+//               </Card>
+//             </Grid.Col>
+//           </Grid>
+
+//           {/* Enhanced Payment Summary */}
+//           <Grid mt="xl">
+//             <Grid.Col span={12}>
+//               <Card shadow="sm" padding="lg" radius="md" withBorder>
+//                 <Group justify="space-between" mb="md">
+//                   <div>
+//                     <Title size="h3">Payment Overview</Title>
+//                     <Text size="sm" c="dimmed">
+//                       Financial performance summary
+//                     </Text>
+//                   </div>
+//                   <Group>
+//                     <IconCoin size={20} />
+//                     <Button size="xs" variant="light">
+//                       View Details
+//                     </Button>
+//                   </Group>
+//                 </Group>
+
+//                 {stats.paymentSummary.length > 0 ? (
+//                   <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }}>
+//                     {stats.paymentSummary.map((payment) => (
+//                       <Paper key={payment.status} p="md" withBorder radius="md">
+//                         <Group justify="space-between" mb="xs">
+//                           <Text size="sm" c="dimmed" tt="capitalize">
+//                             {payment.status} Payments
+//                           </Text>
+//                           <Badge
+//                             color={getStatusColor(payment.status)}
+//                             size="sm"
+//                             variant="filled"
+//                           >
+//                             {payment.count}
+//                           </Badge>
+//                         </Group>
+//                         <Text size="lg" fw={700}>
+//                           Rp {payment.total_amount?.toLocaleString() || 0}
+//                         </Text>
+//                         <Text size="xs" c="dimmed">
+//                           Avg: Rp
+//                           {payment.count > 0
+//                             ? Math.round(
+//                                 (payment.total_amount || 0) / payment.count
+//                               )
+//                             : 0}
+//                         </Text>
+//                       </Paper>
+//                     ))}
+//                   </SimpleGrid>
+//                 ) : (
+//                   <Alert
+//                     icon={<IconInfoCircle size={16} />}
+//                     title="No Payment Data"
+//                     color="blue"
+//                     variant="light"
+//                   >
+//                     Payment records will appear here once the payment system is
+//                     integrated.
+//                   </Alert>
+//                 )}
+//               </Card>
+//             </Grid.Col>
+//           </Grid>
+
+//           {/* Quick Actions Panel */}
+//           <Grid mt="xl">
+//             <Grid.Col span={12}>
+//               <Card shadow="sm" padding="lg" radius="md" withBorder>
+//                 <Group justify="space-between" mb="md">
+//                   <div>
+//                     <Title size="h3">Quick Actions</Title>
+//                     <Text size="sm" c="dimmed">
+//                       Common administrative tasks
+//                     </Text>
+//                   </div>
+//                   <IconBulb size={20} />
+//                 </Group>
+//                 <SimpleGrid cols={{ base: 2, sm: 4 }}>
+//                   <Button
+//                     variant="light"
+//                     leftSection={<IconUserPlus size={16} />}
+//                     onClick={openAddUserModal}
+//                     fullWidth
+//                   >
+//                     Add User
+//                   </Button>
+//                   <Button
+//                     variant="light"
+//                     leftSection={<IconBook size={16} />}
+//                     fullWidth
+//                   >
+//                     Add Course
+//                   </Button>
+//                   <Button
+//                     variant="light"
+//                     leftSection={<IconDownload size={16} />}
+//                     onClick={() => exportData("users")}
+//                     fullWidth
+//                   >
+//                     Export Data
+//                   </Button>
+//                   <Button
+//                     variant="light"
+//                     leftSection={<IconAdjustments size={16} />}
+//                     fullWidth
+//                   >
+//                     Settings
+//                   </Button>
+//                 </SimpleGrid>
+//               </Card>
+//             </Grid.Col>
+//           </Grid>
+//         </Tabs.Panel>
+
+//         {/* Enhanced Users Panel */}
+//         <Tabs.Panel value="users">
+//           <Card shadow="sm" padding="lg" radius="md" withBorder>
+//             <Group justify="space-between" mb="md">
+//               <div>
+//                 <Title size="h3">User Management</Title>
+//                 <Text size="sm" c="dimmed">
+//                   Manage platform users and their permissions
+//                 </Text>
+//               </div>
+//               <Group>
+//                 <Button
+//                   leftSection={<IconDownload size={16} />}
+//                   variant="light"
+//                   onClick={() => exportData("users")}
+//                 >
+//                   Export
+//                 </Button>
+//                 <Button
+//                   leftSection={<IconUserPlus size={16} />}
+//                   onClick={openAddUserModal}
+//                   color="blue"
+//                 >
+//                   Add User
+//                 </Button>
+//               </Group>
+//             </Group>
+
+//             {/* Search and Filter Controls */}
+//             <Grid mb="md">
+//               <Grid.Col span={{ base: 12, sm: 6 }}>
+//                 <TextInput
+//                   placeholder="Search users by name or email..."
+//                   leftSection={<IconSearch size={16} />}
+//                   value={searchTerm}
+//                   onChange={(e) => setSearchTerm(e.target.value)}
+//                 />
+//               </Grid.Col>
+//               <Grid.Col span={{ base: 12, sm: 3 }}>
+//                 <Select
+//                   placeholder="Filter by role"
+//                   leftSection={<IconFilter size={16} />}
+//                   data={[
+//                     { value: "", label: "All Roles" },
+//                     { value: "admin", label: "Admin" },
+//                     { value: "lecturer", label: "Lecturer" },
+//                     { value: "student", label: "Student" },
+//                   ]}
+//                   value={filterRole}
+//                   onChange={setFilterRole}
+//                   clearable
+//                 />
+//               </Grid.Col>
+//               <Grid.Col span={{ base: 12, sm: 3 }}>
+//                 <Text size="sm" c="dimmed" ta="right">
+//                   {filteredUsers.length} of {users.length} users
+//                 </Text>
+//               </Grid.Col>
+//             </Grid>
+
+//             <ScrollArea>
+//               <Table striped highlightOnHover verticalSpacing="md">
+//                 <Table.Thead>
+//                   <Table.Tr>
+//                     <Table.Th>User</Table.Th>
+//                     <Table.Th>Contact</Table.Th>
+//                     <Table.Th>Role</Table.Th>
+//                     <Table.Th>Joined</Table.Th>
+//                     <Table.Th>Actions</Table.Th>
+//                   </Table.Tr>
+//                 </Table.Thead>
+//                 <Table.Tbody>
+//                   {filteredUsers.slice(0, itemsPerPage).map((user) => (
+//                     <Table.Tr key={user.user_id}>
+//                       <Table.Td>
+//                         <Group gap="sm">
+//                           <Avatar
+//                             size={40}
+//                             radius="xl"
+//                             color="blue"
+//                             variant="filled"
+//                           >
+//                             {user.first_name.charAt(0)}
+//                             {user.last_name.charAt(0)}
+//                           </Avatar>
+//                           <div>
+//                             <Text size="sm" fw={500}>
+//                               {user.first_name} {user.last_name}
+//                             </Text>
+//                             <Text size="xs" c="dimmed">
+//                               ID: #{user.user_id}
+//                             </Text>
+//                           </div>
+//                         </Group>
+//                       </Table.Td>
+//                       <Table.Td>
+//                         <Group gap="xs">
+//                           <IconMail size={14} />
+//                           <Text size="sm">{user.email}</Text>
+//                         </Group>
+//                       </Table.Td>
+//                       <Table.Td>
+//                         <Badge
+//                           color={
+//                             user.role === "admin"
+//                               ? "red"
+//                               : user.role === "lecturer"
+//                               ? "blue"
+//                               : "green"
+//                           }
+//                           variant="light"
+//                           size="sm"
+//                         >
+//                           {user.role}
+//                         </Badge>
+//                       </Table.Td>
+//                       <Table.Td>
+//                         <Group gap="xs">
+//                           <IconCalendar size={14} />
+//                           <Text size="sm">
+//                             {new Date(user.created_at).toLocaleDateString()}
+//                           </Text>
+//                         </Group>
+//                       </Table.Td>
+//                       <Table.Td>
+//                         <Group gap="xs">
+//                           <Tooltip label="Edit user">
+//                             <ActionIcon
+//                               variant="subtle"
+//                               color="blue"
+//                               onClick={() => handleUserEdit(user)}
+//                             >
+//                               <IconEdit size={16} />
+//                             </ActionIcon>
+//                           </Tooltip>
+//                           <Tooltip label="Reset password">
+//                             <ActionIcon
+//                               variant="subtle"
+//                               color="orange"
+//                               onClick={() => resetUserPassword(user.user_id)}
+//                             >
+//                               <IconKey size={16} />
+//                             </ActionIcon>
+//                           </Tooltip>
+//                           <Tooltip label="Delete user">
+//                             <ActionIcon
+//                               variant="subtle"
+//                               color="red"
+//                               onClick={() => openDeleteUserModal(user)}
+//                             >
+//                               <IconTrash size={16} />
+//                             </ActionIcon>
+//                           </Tooltip>
+//                         </Group>
+//                       </Table.Td>
+//                     </Table.Tr>
+//                   ))}
+//                 </Table.Tbody>
+//               </Table>
+//             </ScrollArea>
+
+//             {filteredUsers.length === 0 && (
+//               <Box ta="center" py="xl">
+//                 <Stack align="center" gap="md">
+//                   <IconUsers size={48} color="gray" />
+//                   <Text c="dimmed">
+//                     {searchTerm || filterRole
+//                       ? "No users found matching your criteria"
+//                       : "No users registered yet"}
+//                   </Text>
+//                   {!searchTerm && !filterRole && (
+//                     <Button
+//                       leftSection={<IconUserPlus size={16} />}
+//                       onClick={openAddUserModal}
+//                     >
+//                       Add First User
+//                     </Button>
+//                   )}
+//                 </Stack>
+//               </Box>
+//             )}
+//           </Card>
+//         </Tabs.Panel>
+
+//         {/* Enhanced Courses Panel */}
+//         <Tabs.Panel value="courses">
+//           <Card shadow="sm" padding="lg" radius="md" withBorder>
+//             <Group justify="space-between" mb="md">
+//               <div>
+//                 <Title size="h3">Course Management</Title>
+//                 <Text size="sm" c="dimmed">
+//                   Manage courses and their publication status
+//                 </Text>
+//               </div>
+//               <Group>
+//                 <Button
+//                   leftSection={<IconDownload size={16} />}
+//                   variant="light"
+//                   onClick={() => exportData("courses")}
+//                 >
+//                   Export
+//                 </Button>
+//               </Group>
+//             </Group>
+
+//             <Grid mb="md">
+//               <Grid.Col span={{ base: 12, sm: 6 }}>
+//                 <TextInput
+//                   placeholder="Search courses by title or description..."
+//                   leftSection={<IconSearch size={16} />}
+//                   value={searchTerm}
+//                   onChange={(e) => setSearchTerm(e.target.value)}
+//                 />
+//               </Grid.Col>
+//               <Grid.Col span={{ base: 12, sm: 3 }}>
+//                 <Select
+//                   placeholder="Filter by status"
+//                   leftSection={<IconFilter size={16} />}
+//                   data={[
+//                     { value: "", label: "All Status" },
+//                     { value: "published", label: "Published" },
+//                     { value: "draft", label: "Draft" },
+//                   ]}
+//                   value={filterStatus}
+//                   onChange={setFilterStatus}
+//                   clearable
+//                 />
+//               </Grid.Col>
+//               <Grid.Col span={{ base: 12, sm: 3 }}>
+//                 <Text size="sm" c="dimmed" ta="right">
+//                   {filteredCourses.length} of {courses.length} courses
+//                 </Text>
+//               </Grid.Col>
+//             </Grid>
+
+//             <ScrollArea>
+//               <Table striped highlightOnHover verticalSpacing="md">
+//                 <Table.Thead>
+//                   <Table.Tr>
+//                     <Table.Th>Course Details</Table.Th>
+//                     <Table.Th>Instructor</Table.Th>
+//                     <Table.Th>Category & Level</Table.Th>
+//                     <Table.Th>Pricing</Table.Th>
+//                     <Table.Th>Status</Table.Th>
+//                     <Table.Th>Actions</Table.Th>
+//                   </Table.Tr>
+//                 </Table.Thead>
+//                 <Table.Tbody>
+//                   {filteredCourses.slice(0, itemsPerPage).map((course) => (
+//                     <Table.Tr key={course.course_id}>
+//                       <Table.Td>
+//                         <div style={{ maxWidth: 250 }}>
+//                           <Text fw={500} lineClamp={1} mb={4}>
+//                             {course.course_title}
+//                           </Text>
+//                           <Text size="xs" c="dimmed" lineClamp={2}>
+//                             {course.course_description}
+//                           </Text>
+//                         </div>
+//                       </Table.Td>
+//                       <Table.Td>
+//                         <Group gap="sm">
+//                           <Avatar size={30} radius="xl" color="violet">
+//                             {getInstructorName(course).charAt(0)}
+//                           </Avatar>
+//                           <Text size="sm">{getInstructorName(course)}</Text>
+//                         </Group>
+//                       </Table.Td>
+//                       <Table.Td>
+//                         <Stack gap={4}>
+//                           <Text size="sm">{getCategoryName(course)}</Text>
+//                           <Badge variant="outline" size="xs">
+//                             {course.course_level}
+//                           </Badge>
+//                         </Stack>
+//                       </Table.Td>
+//                       <Table.Td>
+//                         <Text
+//                           fw={500}
+//                           c={course.course_price === 0 ? "green" : "dark"}
+//                           size="sm"
+//                         >
+//                           {course.course_price === 0
+//                             ? "Free"
+//                             : `Rp ${course.course_price.toLocaleString()}`}
+//                         </Text>
+//                       </Table.Td>
+//                       <Table.Td>
+//                         <Switch
+//                           checked={course.publish_status === 1}
+//                           onChange={() =>
+//                             handleCourseStatusToggle(
+//                               course.course_id,
+//                               course.publish_status
+//                             )
+//                           }
+//                           label={
+//                             course.publish_status === 1 ? "Published" : "Draft"
+//                           }
+//                           size="sm"
+//                           color={
+//                             course.publish_status === 1 ? "green" : "orange"
+//                           }
+//                         />
+//                       </Table.Td>
+//                       <Table.Td>
+//                         <Group gap="xs">
+//                           <Tooltip label="View course">
+//                             <ActionIcon variant="subtle" color="blue">
+//                               <IconEye size={16} />
+//                             </ActionIcon>
+//                           </Tooltip>
+//                           <Tooltip label="Edit course">
+//                             <ActionIcon variant="subtle" color="orange">
+//                               <IconEdit size={16} />
+//                             </ActionIcon>
+//                           </Tooltip>
+//                         </Group>
+//                       </Table.Td>
+//                     </Table.Tr>
+//                   ))}
+//                 </Table.Tbody>
+//               </Table>
+//             </ScrollArea>
+//           </Card>
+//         </Tabs.Panel>
+
+//         {/* Enhanced Enrollments Panel */}
+//         <Tabs.Panel value="enrollments">
+//           <Card shadow="sm" padding="lg" radius="md" withBorder>
+//             <Group justify="space-between" mb="md">
+//               <div>
+//                 <Title size="h3">Enrollment Management</Title>
+//                 <Text size="sm" c="dimmed">
+//                   Monitor student enrollments and progress
+//                 </Text>
+//               </div>
+//               <Button
+//                 leftSection={<IconDownload size={16} />}
+//                 variant="light"
+//                 onClick={() => exportData("enrollments")}
+//               >
+//                 Export
+//               </Button>
+//             </Group>
+//             <ScrollArea>
+//               <Table striped highlightOnHover verticalSpacing="md">
+//                 <Table.Thead>
+//                   <Table.Tr>
+//                     <Table.Th>Student</Table.Th>
+//                     <Table.Th>Course Details</Table.Th>
+//                     <Table.Th>Category</Table.Th>
+//                     <Table.Th>Status</Table.Th>
+//                     <Table.Th>Enrolled Date</Table.Th>
+//                   </Table.Tr>
+//                 </Table.Thead>
+//                 <Table.Tbody>
+//                   {enrollments.slice(0, 20).map((enrollment) => (
+//                     <Table.Tr key={enrollment.enrollment_id}>
+//                       <Table.Td>
+//                         <Group gap="sm">
+//                           <Avatar size={35} radius="xl" color="green">
+//                             {(
+//                               enrollment.student?.first_name ||
+//                               enrollment.User?.first_name ||
+//                               "U"
+//                             ).charAt(0)}
+//                           </Avatar>
+//                           <div>
+//                             <Text size="sm" fw={500}>
+//                               {getUserName(
+//                                 enrollment.student || enrollment.User
+//                               )}
+//                             </Text>
+//                             <Text size="xs" c="dimmed">
+//                               {enrollment.student?.email ||
+//                                 enrollment.User?.email}
+//                             </Text>
+//                           </div>
+//                         </Group>
+//                       </Table.Td>
+//                       <Table.Td>
+//                         <div>
+//                           <Text size="sm" fw={500} lineClamp={1}>
+//                             {enrollment.course?.course_title ||
+//                               enrollment.Course?.course_title ||
+//                               "Unknown Course"}
+//                           </Text>
+//                           <Badge size="xs" variant="light" color="blue">
+//                             {enrollment.course?.course_level ||
+//                               enrollment.Course?.course_level ||
+//                               "N/A"}
+//                           </Badge>
+//                         </div>
+//                       </Table.Td>
+//                       <Table.Td>
+//                         <Text size="sm">
+//                           {enrollment.course?.category?.category_name ||
+//                             enrollment.Course?.Category?.category_name ||
+//                             "Uncategorized"}
+//                         </Text>
+//                       </Table.Td>
+//                       <Table.Td>
+//                         <Badge
+//                           color={getStatusColor(enrollment.status)}
+//                           variant="filled"
+//                           size="sm"
+//                         >
+//                           {enrollment.status}
+//                         </Badge>
+//                       </Table.Td>
+//                       <Table.Td>
+//                         <Text size="sm">
+//                           {new Date(enrollment.created_at).toLocaleDateString()}
+//                         </Text>
+//                       </Table.Td>
+//                     </Table.Tr>
+//                   ))}
+//                 </Table.Tbody>
+//               </Table>
+//             </ScrollArea>
+//           </Card>
+//         </Tabs.Panel>
+
+//         {/* Enhanced Payments Panel */}
+//         <Tabs.Panel value="payments">
+//           <Card shadow="sm" padding="lg" radius="md" withBorder>
+//             <Group justify="space-between" mb="md">
+//               <div>
+//                 <Title size="h3">Payment Management</Title>
+//                 <Text size="sm" c="dimmed">
+//                   Monitor financial transactions and revenue
+//                 </Text>
+//               </div>
+//             </Group>
+//             <ScrollArea>
+//               <Table striped highlightOnHover verticalSpacing="md">
+//                 <Table.Thead>
+//                   <Table.Tr>
+//                     <Table.Th>Student</Table.Th>
+//                     <Table.Th>Course</Table.Th>
+//                     <Table.Th>Amount</Table.Th>
+//                     <Table.Th>Method</Table.Th>
+//                     <Table.Th>Status</Table.Th>
+//                     <Table.Th>Date</Table.Th>
+//                   </Table.Tr>
+//                 </Table.Thead>
+//                 <Table.Tbody>
+//                   {payments.map((payment) => (
+//                     <Table.Tr key={payment.payment_id}>
+//                       <Table.Td>
+//                         <Group gap="sm">
+//                           <Avatar size={30} radius="xl" color="indigo">
+//                             {(
+//                               payment.user?.first_name ||
+//                               payment.User?.first_name ||
+//                               "U"
+//                             ).charAt(0)}
+//                           </Avatar>
+//                           <div>
+//                             <Text size="sm" fw={500}>
+//                               {getUserName(payment.user || payment.User)}
+//                             </Text>
+//                             <Text size="xs" c="dimmed">
+//                               {payment.user?.email || payment.User?.email}
+//                             </Text>
+//                           </div>
+//                         </Group>
+//                       </Table.Td>
+//                       <Table.Td>
+//                         <Text size="sm" fw={500}>
+//                           {payment.course?.course_title ||
+//                             payment.Course?.course_title ||
+//                             "Unknown Course"}
+//                         </Text>
+//                       </Table.Td>
+//                       <Table.Td>
+//                         <Text fw={700} size="sm" c="dark">
+//                           Rp {payment.amount?.toLocaleString() || 0}
+//                         </Text>
+//                       </Table.Td>
+//                       <Table.Td>
+//                         <Text size="sm">
+//                           {payment.payment_method || "Not specified"}
+//                         </Text>
+//                       </Table.Td>
+//                       <Table.Td>
+//                         <Badge
+//                           color={getStatusColor(payment.status)}
+//                           variant="filled"
+//                           size="sm"
+//                         >
+//                           {payment.status}
+//                         </Badge>
+//                       </Table.Td>
+//                       <Table.Td>
+//                         <Text size="sm">
+//                           {new Date(payment.created_at).toLocaleDateString()}
+//                         </Text>
+//                       </Table.Td>
+//                     </Table.Tr>
+//                   ))}
+//                 </Table.Tbody>
+//               </Table>
+//             </ScrollArea>
+//           </Card>
+//         </Tabs.Panel>
+
+//         {/* Enhanced Analytics Panel */}
+//         <Tabs.Panel value="analytics">
+//           <Stack gap="xl">
+//             {/* Performance Overview */}
+//             <Card shadow="sm" padding="lg" radius="md" withBorder>
+//               <Group justify="space-between" mb="md">
+//                 <div>
+//                   <Title size="h3">Performance Metrics</Title>
+//                   <Text size="sm" c="dimmed">
+//                     Key performance indicators
+//                   </Text>
+//                 </div>
+//                 <IconDatabase size={20} />
+//               </Group>
+
+//               <SimpleGrid cols={{ base: 1, md: 3 }} spacing="lg">
+//                 <Paper p="md" withBorder radius="md">
+//                   <Group gap="xs" mb="xs">
+//                     <RingProgress
+//                       size={60}
+//                       thickness={4}
+//                       sections={[
+//                         {
+//                           value: parseFloat(metrics.publishRate || "0"),
+//                           color: "blue",
+//                         },
+//                       ]}
+//                       label={
+//                         <Text size="xs" ta="center" fw={700}>
+//                           {metrics.publishRate}%
+//                         </Text>
+//                       }
+//                     />
+//                     <div>
+//                       <Text size="sm" c="dimmed">
+//                         Publication Rate
+//                       </Text>
+//                       <Text size="xs" c="dimmed">
+//                         {stats.publishedCourses} of {stats.totalCourses} courses
+//                       </Text>
+//                     </div>
+//                   </Group>
+//                 </Paper>
+
+//                 <Paper p="md" withBorder radius="md">
+//                   <Group gap="xs" mb="xs">
+//                     <ThemeIcon
+//                       size={60}
+//                       radius="md"
+//                       color="green"
+//                       variant="light"
+//                     >
+//                       <IconTrendingUp size={24} />
+//                     </ThemeIcon>
+//                     <div>
+//                       <Text size="sm" c="dimmed">
+//                         Enrollment Rate
+//                       </Text>
+//                       <Text size="lg" fw={700}>
+//                         {metrics.enrollmentRate}
+//                       </Text>
+//                       <Text size="xs" c="dimmed">
+//                         per course average
+//                       </Text>
+//                     </div>
+//                   </Group>
+//                 </Paper>
+
+//                 <Paper p="md" withBorder radius="md">
+//                   <Group gap="xs" mb="xs">
+//                     <ThemeIcon
+//                       size={60}
+//                       radius="md"
+//                       color="orange"
+//                       variant="light"
+//                     >
+//                       <IconUsers size={24} />
+//                     </ThemeIcon>
+//                     <div>
+//                       <Text size="sm" c="dimmed">
+//                         User Growth
+//                       </Text>
+//                       <Text size="lg" fw={700}>
+//                         {(
+//                           stats.totalStudents + stats.totalLecturers || 0
+//                         ).toLocaleString()}
+//                       </Text>
+//                       <Text size="xs" c="dimmed">
+//                         total platform users
+//                       </Text>
+//                     </div>
+//                   </Group>
+//                 </Paper>
+//               </SimpleGrid>
+//             </Card>
+
+//             {/* Category Analytics */}
+//             <Card shadow="sm" padding="lg" radius="md" withBorder>
+//               <Group justify="space-between" mb="md">
+//                 <div>
+//                   <Title size="h3">Category Performance</Title>
+//                   <Text size="sm" c="dimmed">
+//                     Analytics breakdown by course category
+//                   </Text>
+//                 </div>
+//                 <IconChartBar size={20} />
+//               </Group>
+
+//               <ResponsiveContainer width="100%" height={400}>
+//                 <BarChart
+//                   data={stats.categoryAnalytics}
+//                   margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+//                 >
+//                   <CartesianGrid strokeDasharray="3 3" />
+//                   <XAxis
+//                     dataKey="category_name"
+//                     angle={-45}
+//                     textAnchor="end"
+//                     height={100}
+//                     interval={0}
+//                   />
+//                   <YAxis />
+//                   <RechartsTooltip
+//                     contentStyle={{
+//                       backgroundColor: "#fff",
+//                       border: "1px solid #e9ecef",
+//                       borderRadius: "8px",
+//                     }}
+//                   />
+//                   <Legend />
+//                   <Bar
+//                     dataKey="course_count"
+//                     fill="#339af0"
+//                     name="Total Courses"
+//                     radius={[4, 4, 0, 0]}
+//                   />
+//                   <Bar
+//                     dataKey="enrollment_count"
+//                     fill="#51cf66"
+//                     name="Total Enrollments"
+//                     radius={[4, 4, 0, 0]}
+//                   />
+//                 </BarChart>
+//               </ResponsiveContainer>
+//             </Card>
+//           </Stack>
+//         </Tabs.Panel>
+//       </Tabs>
+
+//       {/* Enhanced User Modal */}
+//       <Modal
+//         opened={userModalOpened}
+//         onClose={closeUserModal}
+//         title={
+//           <Group>
+//             <ThemeIcon size={30} radius="md" color="blue" variant="light">
+//               <IconUserPlus size={18} />
+//             </ThemeIcon>
+//             <div>
+//               <Text fw={500} size="lg">
+//                 {selectedUser ? "Edit User" : "Create New User"}
+//               </Text>
+//               <Text size="xs" c="dimmed">
+//                 {selectedUser
+//                   ? "Update user information and permissions"
+//                   : "Add a new user to the platform"}
+//               </Text>
+//             </div>
+//           </Group>
+//         }
+//         size="lg"
+//         centered
+//       >
+//         <Stack gap="md">
+//           <SimpleGrid cols={2} spacing="md">
+//             <TextInput
+//               label="First Name"
+//               placeholder="Enter first name"
+//               value={userFormData.first_name}
+//               onChange={(e) =>
+//                 setUserFormData({ ...userFormData, first_name: e.target.value })
+//               }
+//               required
+//               withAsterisk
+//             />
+//             <TextInput
+//               label="Last Name"
+//               placeholder="Enter last name"
+//               value={userFormData.last_name}
+//               onChange={(e) =>
+//                 setUserFormData({ ...userFormData, last_name: e.target.value })
+//               }
+//               required
+//               withAsterisk
+//             />
+//           </SimpleGrid>
+
+//           <TextInput
+//             label="Email Address"
+//             placeholder="Enter email address"
+//             type="email"
+//             value={userFormData.email}
+//             onChange={(e) =>
+//               setUserFormData({ ...userFormData, email: e.target.value })
+//             }
+//             required
+//             withAsterisk
+//             leftSection={<IconMail size={16} />}
+//           />
+
+//           <Select
+//             label="User Role"
+//             placeholder="Select user role"
+//             data={[
+//               { value: "student", label: "Student - Can enroll in courses" },
+//               {
+//                 value: "lecturer",
+//                 label: "Lecturer - Can create and manage courses",
+//               },
+//               { value: "admin", label: "Admin - Full platform access" },
+//             ]}
+//             value={userFormData.role}
+//             onChange={(value) =>
+//               setUserFormData({ ...userFormData, role: value || "" })
+//             }
+//             required
+//             withAsterisk
+//           />
+
+//           {!selectedUser && (
+//             <TextInput
+//               label="Password"
+//               placeholder="Enter secure password"
+//               type="password"
+//               value={userFormData.password}
+//               onChange={(e) =>
+//                 setUserFormData({ ...userFormData, password: e.target.value })
+//               }
+//               required
+//               withAsterisk
+//               leftSection={<IconKey size={16} />}
+//               description="Password should be at least 8 characters long"
+//             />
+//           )}
+
+//           {selectedUser && (
+//             <Alert
+//               icon={<IconInfoCircle size={16} />}
+//               title="Password Update"
+//               color="blue"
+//               variant="light"
+//             >
+//               To change the user's password, use the "Reset Password" button in
+//               the user list.
+//             </Alert>
+//           )}
+
+//           <Divider />
+
+//           <Group justify="flex-end">
+//             <Button variant="subtle" onClick={closeUserModal}>
+//               Cancel
+//             </Button>
+//             <Button
+//               onClick={selectedUser ? handleUserSave : handleUserCreate}
+//               leftSection={
+//                 selectedUser ? (
+//                   <IconEdit size={16} />
+//                 ) : (
+//                   <IconUserPlus size={16} />
+//                 )
+//               }
+//               loading={refreshing}
+//             >
+//               {selectedUser ? "Save Changes" : "Create User"}
+//             </Button>
+//           </Group>
+//         </Stack>
+//       </Modal>
+
+//       {/* Enhanced Delete Confirmation Modal */}
+//       <Modal
+//         opened={deleteModalOpened}
+//         onClose={closeDeleteModal}
+//         title={
+//           <Group>
+//             <ThemeIcon size={30} radius="md" color="red" variant="light">
+//               <IconTrash size={18} />
+//             </ThemeIcon>
+//             <div>
+//               <Text fw={500} size="lg" c="red">
+//                 Confirm User Deletion
+//               </Text>
+//               <Text size="xs" c="dimmed">
+//                 This action requires confirmation
+//               </Text>
+//             </div>
+//           </Group>
+//         }
+//         size="md"
+//         centered
+//       >
+//         <Stack gap="md">
+//           <Alert
+//             icon={<IconAlertTriangle size={16} />}
+//             title="Warning"
+//             color="red"
+//             variant="light"
+//           >
+//             <Text>
+//               You are about to delete user{" "}
+//               <Text component="span" fw={700}>
+//                 {userToDelete?.first_name} {userToDelete?.last_name}
+//               </Text>{" "}
+//               ({userToDelete?.email}).
+//             </Text>
+//           </Alert>
+
+//           <Text size="sm" c="dimmed">
+//             This action will:
+//           </Text>
+//           <Box pl="md">
+//             <Text size="sm" c="dimmed">
+//               • Mark the user as deleted in the system
+//             </Text>
+//             <Text size="sm" c="dimmed">
+//               • Preserve data for audit purposes
+//             </Text>
+//             <Text size="sm" c="dimmed">
+//               • Prevent future login access
+//             </Text>
+//             <Text size="sm" c="dimmed">
+//               • Maintain enrollment history
+//             </Text>
+//           </Box>
+
+//           <Divider />
+
+//           <Group justify="flex-end">
+//             <Button variant="subtle" onClick={closeDeleteModal}>
+//               Cancel
+//             </Button>
+//             <Button
+//               color="red"
+//               onClick={handleUserDelete}
+//               leftSection={<IconTrash size={16} />}
+//               loading={refreshing}
+//             >
+//               Delete User
+//             </Button>
+//           </Group>
+//         </Stack>
+//       </Modal>
+//     </Container>
+//   );
+// };
+
+// export default AdminDashboard;
