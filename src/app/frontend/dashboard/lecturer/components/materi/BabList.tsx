@@ -1,4 +1,64 @@
-// src\app\frontend\dashboard\lecturer\components\materi\BabList.tsx
+// // src\app\frontend\dashboard\lecturer\components\materi\BabList.tsx
+
+// "use client";
+// import React from "react";
+// import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
+// import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
+// import { Stack } from "@mantine/core";
+// import BabItem from "./BabItem";
+// import type { BabType } from "../../types/material";
+
+// interface BabListProps {
+//   babs: BabType[];
+//   setBabs: (next: BabType[]) => void;
+//   onOpenContentModal: (babId: string) => void;
+// }
+
+// export default function BabList({ babs, setBabs, onOpenContentModal  }: BabListProps) {
+//   const sensors = useSensors(useSensor(PointerSensor));
+
+//   const handleDragEnd = (event: DragEndEvent) => {
+//     const { active, over } = event;
+//     if (!over) return;
+//     if (active.id !== over.id) {
+//       const oldIndex = babs.findIndex((b) => b.id === active.id);
+//       const newIndex = babs.findIndex((b) => b.id === over.id);
+//       if (oldIndex !== -1 && newIndex !== -1) {
+//         setBabs(arrayMove(babs, oldIndex, newIndex));
+//       }
+//     }
+//   };
+
+//   const handleRemoveBab = (id: string) => {
+//     setBabs(babs.filter((b) => b.id !== id));
+//   };
+
+//   const handleRemoveContent = (babId: string, contentId: string) => {
+//     setBabs(
+//       babs.map((b) =>
+//         b.id === babId ? { ...b, items: b.items.filter((c) => c.id !== contentId) } : b
+//       )
+//     );
+//   };
+
+//   return (
+//     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+//       <SortableContext items={babs.map((b) => b.id)} strategy={verticalListSortingStrategy}>
+//         <Stack>
+//           {babs.map((bab) => (
+//             <BabItem
+//               key={bab.id}
+//               bab={bab}
+//               onRemoveBab={handleRemoveBab}
+//               onRemoveContent={handleRemoveContent}
+//               onOpenContentModal={() => onOpenContentModal(bab.id)} 
+//             />
+//           ))}
+//         </Stack>
+//       </SortableContext>
+//     </DndContext>
+//   );
+// }
 
 "use client";
 import React from "react";
@@ -6,35 +66,94 @@ import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEn
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import { Stack } from "@mantine/core";
 import BabItem from "./BabItem";
-import type { BabType } from "../../types/material";
+import type { BabType, ContentItemType } from "../../types/material";
 
 interface BabListProps {
   babs: BabType[];
-  setBabs: (next: BabType[]) => void;
+  setBabs: (babs: BabType[] | ((prev: BabType[]) => BabType[])) => void;
+  onOpenContentModal: (babId: string, content?: ContentItemType) => void;
 }
 
-export default function BabList({ babs, setBabs }: BabListProps) {
-  const sensors = useSensors(useSensor(PointerSensor));
+export default function BabList({ babs, setBabs, onOpenContentModal }: BabListProps) {
+  const sensors = useSensors(useSensor(PointerSensor, {
+    activationConstraint: {
+      distance: 8, // Membutuhkan gerakan 8px sebelum drag dimulai
+    },
+  }));
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    if (!over) return;
-    if (active.id !== over.id) {
-      const oldIndex = babs.findIndex((b) => b.id === active.id);
-      const newIndex = babs.findIndex((b) => b.id === over.id);
-      if (oldIndex !== -1 && newIndex !== -1) {
-        setBabs(arrayMove(babs, oldIndex, newIndex));
-      }
+
+    if (!over || active.id === over.id) {
+      return;
     }
+
+    const activeId = active.id.toString();
+    const overId = over.id.toString();
+
+    setBabs((prevBabs) => {
+      const newBabs = JSON.parse(JSON.stringify(prevBabs)); // Deep copy untuk menghindari mutasi state
+
+      // Skenario 1: Mengatur ulang urutan BAB
+      if (activeId.startsWith('bab-') && overId.startsWith('bab-')) {
+        const oldIndex = newBabs.findIndex((b: BabType) => b.id === activeId);
+        const newIndex = newBabs.findIndex((b: BabType) => b.id === overId);
+        if (oldIndex !== -1 && newIndex !== -1) {
+          return arrayMove(newBabs, oldIndex, newIndex);
+        }
+      }
+
+      // Skenario 2: Mengatur ulang KONTEN di dalam atau antar BAB
+      if (!activeId.startsWith('bab-')) {
+        let sourceBabIndex = -1, destBabIndex = -1;
+        let activeItemIndex = -1, overItemIndex = -1;
+        let activeItem: ContentItemType | null = null;
+
+        // Cari item yang digeser dan bab asalnya
+        for (let i = 0; i < newBabs.length; i++) {
+          const itemIndex = newBabs[i].items.findIndex((item: ContentItemType) => item.id === activeId);
+          if (itemIndex !== -1) {
+            sourceBabIndex = i;
+            activeItemIndex = itemIndex;
+            activeItem = newBabs[i].items[itemIndex];
+            break;
+          }
+        }
+        
+        // Cari tujuan (bisa berupa item lain atau header bab)
+        for (let i = 0; i < newBabs.length; i++) {
+          if (newBabs[i].id === overId) { // Jika dijatuhkan di atas header Bab
+            destBabIndex = i;
+            overItemIndex = newBabs[i].items.length; // Tambahkan ke akhir bab
+            break;
+          }
+          const itemIndex = newBabs[i].items.findIndex((item: ContentItemType) => item.id === overId);
+          if (itemIndex !== -1) {
+            destBabIndex = i;
+            overItemIndex = itemIndex;
+            break;
+          }
+        }
+
+        if (sourceBabIndex !== -1 && destBabIndex !== -1 && activeItem) {
+          // Hapus item dari bab asal
+          newBabs[sourceBabIndex].items.splice(activeItemIndex, 1);
+          // Masukkan item ke bab tujuan
+          newBabs[destBabIndex].items.splice(overItemIndex, 0, activeItem);
+        }
+      }
+      
+      return newBabs;
+    });
   };
 
   const handleRemoveBab = (id: string) => {
-    setBabs(babs.filter((b) => b.id !== id));
+    setBabs((prev) => prev.filter((b) => b.id !== id));
   };
 
   const handleRemoveContent = (babId: string, contentId: string) => {
-    setBabs(
-      babs.map((b) =>
+    setBabs((prev) =>
+      prev.map((b) =>
         b.id === babId ? { ...b, items: b.items.filter((c) => c.id !== contentId) } : b
       )
     );
@@ -42,18 +161,19 @@ export default function BabList({ babs, setBabs }: BabListProps) {
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <SortableContext items={babs.map((b) => b.id)} strategy={verticalListSortingStrategy}>
-        <Stack>
+      <Stack>
+        <SortableContext items={babs.map((b) => b.id)} strategy={verticalListSortingStrategy}>
           {babs.map((bab) => (
             <BabItem
               key={bab.id}
               bab={bab}
               onRemoveBab={handleRemoveBab}
               onRemoveContent={handleRemoveContent}
+              onOpenContentModal={onOpenContentModal}
             />
           ))}
-        </Stack>
-      </SortableContext>
+        </SortableContext>
+      </Stack>
     </DndContext>
   );
 }

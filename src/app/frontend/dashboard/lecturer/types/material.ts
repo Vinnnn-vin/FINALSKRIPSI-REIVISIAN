@@ -19,8 +19,8 @@ export interface MaterialType {
   material_id: number;
   material_name: string;
   material_description: string;
-  MaterialDetails: MaterialDetailType[];
-  Quizzes: QuizType[];
+  details: MaterialDetailType[]; // <-- Nama yang benar (sesuai alias di API)
+  quizzes: QuizType[]; 
 }
 
 export type ContentItemType = {

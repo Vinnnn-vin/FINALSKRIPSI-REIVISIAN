@@ -2,25 +2,32 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useState } from "react";
-import { 
-  Card, 
-  Stack, 
-  TextInput, 
-  Textarea, 
-  Button, 
+import React, { useEffect, useState } from "react";
+import {
+  Card,
+  Stack,
+  TextInput,
+  Textarea,
+  Button,
   FileInput,
   Progress,
   Alert,
   Group,
   Text,
-  Switch
+  Switch,
 } from "@mantine/core";
-import { IconUpload, IconCheck, IconX, IconFileText } from "@tabler/icons-react";
+import {
+  IconUpload,
+  IconCheck,
+  IconX,
+  IconFileText,
+} from "@tabler/icons-react";
 import type { ContentItemType } from "../../types/material";
 
 interface AssignmentFormProps {
   onAddAssignment: (item: ContentItemType) => void;
+  onUpdateAssignment?: (item: ContentItemType) => void;
+  initialData?: ContentItemType | null;
 }
 
 interface UploadState {
@@ -30,7 +37,13 @@ interface UploadState {
   error: string | null;
 }
 
-export default function AssignmentForm({ onAddAssignment }: AssignmentFormProps) {
+export default function AssignmentForm({
+  onAddAssignment,
+  onUpdateAssignment,
+  initialData,
+}: AssignmentFormProps) {
+  const isEditMode = !!initialData && initialData.type === "assignment";
+
   const [title, setTitle] = useState("");
   const [instructions, setInstructions] = useState("");
   const [dueDate, setDueDate] = useState("");
@@ -40,101 +53,156 @@ export default function AssignmentForm({ onAddAssignment }: AssignmentFormProps)
     uploading: false,
     progress: 0,
     url: null,
-    error: null
+    error: null,
   });
 
+  useEffect(() => {
+    if (isEditMode && initialData) {
+      setTitle(initialData.title || "");
+      setInstructions(initialData.instructions || "");
+      setDueDate(initialData.dueDate?.split("T")[0] || ""); // Format tanggal untuk input type="date"
+      if (initialData.attachmentUrl) {
+        setHasAttachment(true);
+        setUploadState({
+          uploading: false,
+          progress: 100,
+          url: initialData.attachmentUrl,
+          error: null,
+        });
+      }
+    } else {
+      setTitle("");
+      setInstructions("");
+      setDueDate("");
+      setHasAttachment(false);
+      setUploadState({ uploading: false, progress: 0, url: null, error: null });
+    }
+  }, [initialData, isEditMode]);
   const uploadAttachment = async (file: File): Promise<string> => {
     const formData = new FormData();
-    formData.append('file', file);
-    formData.append('type', 'assignment');
+    formData.append("file", file);
+    formData.append("type", "assignment");
 
-    setUploadState(prev => ({ ...prev, uploading: true, progress: 0, error: null }));
+    setUploadState((prev) => ({
+      ...prev,
+      uploading: true,
+      progress: 0,
+      error: null,
+    }));
 
     try {
-      const response = await fetch('/api/dashboard/lecturer/upload', {
-        method: 'POST',
-        body: formData
+      const response = await fetch("/api/dashboard/lecturer/upload", {
+        method: "POST",
+        body: formData,
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Upload failed');
+        throw new Error(errorData.error || "Upload failed");
       }
 
       const result = await response.json();
-      
+
       if (!result.success) {
-        throw new Error(result.error || 'Upload failed');
+        throw new Error(result.error || "Upload failed");
       }
 
-      setUploadState(prev => ({ 
-        ...prev, 
-        uploading: false, 
-        progress: 100, 
+      setUploadState((prev) => ({
+        ...prev,
+        uploading: false,
+        progress: 100,
         url: result.data.url,
-        error: null 
+        error: null,
       }));
 
       return result.data.url;
     } catch (error: any) {
-      setUploadState(prev => ({ 
-        ...prev, 
-        uploading: false, 
-        progress: 0, 
-        error: error.message 
+      setUploadState((prev) => ({
+        ...prev,
+        uploading: false,
+        progress: 0,
+        error: error.message,
       }));
       throw error;
     }
   };
 
-  const handleAdd = async () => {
-    if (!title.trim()) {
-      alert("Judul tugas harus diisi");
+  // const handleAdd = async () => {
+  //   if (!title.trim()) {
+  //     alert("Judul tugas harus diisi");
+  //     return;
+  //   }
+
+  //   if (!instructions.trim()) {
+  //     alert("Instruksi tugas harus diisi");
+  //     return;
+  //   }
+
+  //   try {
+  //     let attachmentUrl = "";
+
+  //     // Upload attachment if provided
+  //     if (hasAttachment && attachmentFile) {
+  //       attachmentUrl = await uploadAttachment(attachmentFile);
+  //     }
+
+  //     const item: ContentItemType = {
+  //       id: `a-${Date.now()}`,
+  //       type: "assignment",
+  //       title,
+  //       instructions,
+  //       dueDate: dueDate || undefined,
+  //       attachmentUrl: attachmentUrl || undefined,
+  //     };
+
+  //     onAddAssignment(item);
+
+  //     // Reset form
+  //     setTitle("");
+  //     setInstructions("");
+  //     setDueDate("");
+  //     setAttachmentFile(null);
+  //     setHasAttachment(false);
+  //     setUploadState({
+  //       uploading: false,
+  //       progress: 0,
+  //       url: null,
+  //       error: null,
+  //     });
+
+  //     alert("Tugas berhasil ditambahkan!");
+  //   } catch (error: any) {
+  //     console.error("Error adding assignment:", error);
+  //     alert(`Gagal menambahkan tugas: ${error.message}`);
+  //   }
+  // };
+
+  const handleAddOrUpdate = async () => {
+    if (!title.trim() || !instructions.trim()) {
+      alert("Judul dan instruksi tugas harus diisi");
       return;
     }
 
-    if (!instructions.trim()) {
-      alert("Instruksi tugas harus diisi");
+    if (hasAttachment && !uploadState.url && attachmentFile) {
+      alert("Harap tunggu hingga file lampiran selesai diunggah.");
       return;
     }
 
-    try {
-      let attachmentUrl = "";
+    const item: ContentItemType = {
+      id: isEditMode ? initialData.id : `a-${Date.now()}`,
+      type: "assignment",
+      title,
+      instructions,
+      name: title, // Pastikan 'name' diisi untuk konsistensi
+      description: instructions, // Pastikan 'description' diisi
+      dueDate: dueDate || undefined,
+      attachmentUrl: uploadState.url || undefined,
+    };
 
-      // Upload attachment if provided
-      if (hasAttachment && attachmentFile) {
-        attachmentUrl = await uploadAttachment(attachmentFile);
-      }
-
-      const item: ContentItemType = {
-        id: `a-${Date.now()}`,
-        type: "assignment",
-        title,
-        instructions,
-        dueDate: dueDate || undefined,
-        attachmentUrl: attachmentUrl || undefined,
-      };
-
+    if (isEditMode && onUpdateAssignment) {
+      onUpdateAssignment(item);
+    } else {
       onAddAssignment(item);
-
-      // Reset form
-      setTitle("");
-      setInstructions("");
-      setDueDate("");
-      setAttachmentFile(null);
-      setHasAttachment(false);
-      setUploadState({
-        uploading: false,
-        progress: 0,
-        url: null,
-        error: null
-      });
-
-      alert("Tugas berhasil ditambahkan!");
-
-    } catch (error: any) {
-      console.error("Error adding assignment:", error);
-      alert(`Gagal menambahkan tugas: ${error.message}`);
     }
   };
 
@@ -153,9 +221,10 @@ export default function AssignmentForm({ onAddAssignment }: AssignmentFormProps)
           disabled={uploadState.uploading}
           description="File yang akan diberikan kepada student sebagai referensi atau template"
         />
-        
+
         <Text size="xs" c="dimmed">
-          Tipe file yang didukung: PDF, DOC, DOCX, XLS, XLSX, TXT, JPG, PNG (Maks. 50MB)
+          Tipe file yang didukung: PDF, DOC, DOCX, XLS, XLSX, TXT, JPG, PNG
+          (Maks. 50MB)
         </Text>
 
         {uploadState.uploading && (
@@ -169,11 +238,11 @@ export default function AssignmentForm({ onAddAssignment }: AssignmentFormProps)
           <Alert color="green" icon={<IconCheck size={16} />}>
             <Group justify="space-between">
               <Text size="sm">File lampiran berhasil diupload</Text>
-              <Button 
-                size="xs" 
-                variant="subtle" 
-                component="a" 
-                href={uploadState.url} 
+              <Button
+                size="xs"
+                variant="subtle"
+                component="a"
+                href={uploadState.url}
                 target="_blank"
                 leftSection={<IconFileText size={12} />}
               >
@@ -202,7 +271,7 @@ export default function AssignmentForm({ onAddAssignment }: AssignmentFormProps)
           onChange={(e) => setTitle(e.currentTarget.value)}
           required
         />
-        
+
         <Textarea
           label="Instruksi Tugas"
           placeholder="Jelaskan secara detail apa yang harus dikerjakan mahasiswa, kriteria penilaian, format pengumpulan, dll."
@@ -211,7 +280,7 @@ export default function AssignmentForm({ onAddAssignment }: AssignmentFormProps)
           onChange={(e) => setInstructions(e.currentTarget.value)}
           required
         />
-        
+
         <TextInput
           type="date"
           label="Tanggal Deadline (opsional)"
@@ -232,7 +301,7 @@ export default function AssignmentForm({ onAddAssignment }: AssignmentFormProps)
                 uploading: false,
                 progress: 0,
                 url: null,
-                error: null
+                error: null,
               });
             }
           }}
@@ -242,26 +311,25 @@ export default function AssignmentForm({ onAddAssignment }: AssignmentFormProps)
 
         <Group justify="space-between" mt="md">
           <Stack gap={0}>
-            <Text size="sm" fw={500}>Ringkasan Tugas:</Text>
+            <Text size="sm" fw={500}>
+              Ringkasan Tugas:
+            </Text>
             <Text size="xs" c="dimmed">
               {title || "Belum ada judul"}
-              {dueDate && ` • Deadline: ${new Date(dueDate).toLocaleDateString('id-ID')}`}
+              {dueDate &&
+                ` • Deadline: ${new Date(dueDate).toLocaleDateString("id-ID")}`}
               {uploadState.url && " • Ada lampiran"}
             </Text>
           </Stack>
-          
-          <Button 
-            onClick={handleAdd}
+
+          <Button
+            onClick={handleAddOrUpdate}
             disabled={
-              !title.trim() || 
-              !instructions.trim() ||
-              (hasAttachment && attachmentFile && !uploadState.url) ||
-              uploadState.uploading
+              !title.trim() || !instructions.trim() || uploadState.uploading
             }
             loading={uploadState.uploading}
-            leftSection={uploadState.uploading ? undefined : <IconCheck size={16} />}
           >
-            {uploadState.uploading ? "Uploading..." : "Tambah Tugas ke Daftar Konten"}
+            {isEditMode ? "Simpan Perubahan" : "Tambah Tugas"}
           </Button>
         </Group>
       </Stack>

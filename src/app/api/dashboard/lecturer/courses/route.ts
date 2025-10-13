@@ -65,7 +65,6 @@ export async function POST(req: NextRequest) {
     const courseTitle = formData.get("course_title") as string;
     const courseDescription = formData.get("course_description") as string;
     const courseLevel = (formData.get("course_level") as string)
-      ?.toLowerCase()
       ?.trim();
     // const coursePriceStr = formData.get("course_price") as string;
     const categoryIdStr = formData.get("category_id") as string;

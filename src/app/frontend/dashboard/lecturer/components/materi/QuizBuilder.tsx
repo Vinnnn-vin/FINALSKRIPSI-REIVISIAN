@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Card,
   Stack,
@@ -13,11 +13,16 @@ import {
   Text,
   ActionIcon,
   Textarea,
+  Divider,
 } from "@mantine/core";
 import { IconPlus, IconTrash } from "@tabler/icons-react";
 import type { QuestionType, ContentItemType } from "../../types/material";
 
 interface QuizBuilderProps {
+  onAddQuiz: (item: ContentItemType) => void;
+  onUpdateQuiz?: (item: ContentItemType) => void;
+  initialData?: ContentItemType | null;
+
   questions: QuestionType[];
   addQuestion: () => void;
   removeQuestion: (index: number) => void;
@@ -31,11 +36,14 @@ interface QuizBuilderProps {
   toggleCorrectOption: (qIndex: number, oIndex: number) => void;
   updateOptionText: (qIndex: number, oIndex: number, text: string) => void;
   setQuestions: (qs: QuestionType[]) => void;
-  onAddQuiz: (item: ContentItemType) => void;
 }
 
 export default function QuizBuilder({
+  onAddQuiz,
+  onUpdateQuiz,
+  initialData,
   questions,
+  setQuestions,
   addQuestion,
   removeQuestion,
   updateQuestionText,
@@ -44,18 +52,36 @@ export default function QuizBuilder({
   removeOption,
   toggleCorrectOption,
   updateOptionText,
-  setQuestions,
-  onAddQuiz,
 }: QuizBuilderProps) {
+  const isEditMode = !!initialData && initialData.type === "quiz";
+
   const [quizTitle, setQuizTitle] = useState("");
   const [quizDescription, setQuizDescription] = useState("");
-  const [quiz, setQuiz] = useState({
-    passing_score: undefined as number | undefined,
-    time_limit: undefined as number | undefined,
-    max_attempts: undefined as number | undefined,
-  });
+  const [quiz, setQuiz] = useState<{
+    passing_score?: number;
+    time_limit?: number;
+    max_attempts?: number;
+  }>({});
 
-  const handleAddQuizToList = () => {
+  useEffect(() => {
+    if (isEditMode && initialData) {
+      setQuizTitle(initialData.title || "");
+      setQuizDescription(initialData.description || "");
+      setQuestions(initialData.questions || []);
+      setQuiz({
+        passing_score: initialData.passing_score,
+        time_limit: initialData.time_limit,
+        max_attempts: initialData.max_attempts,
+      });
+    } else {
+      setQuizTitle("");
+      setQuizDescription("");
+      setQuestions([]);
+      setQuiz({});
+    }
+  }, [initialData, isEditMode, setQuestions]);
+
+  const handleAddOrUpdate = () => {
     if (!quizTitle.trim()) return;
     if (questions.length === 0) return;
 
@@ -71,9 +97,10 @@ export default function QuizBuilder({
     }
 
     const item: ContentItemType = {
-      id: `c-${Date.now()}`,
+      id: isEditMode ? initialData.id : `q-${Date.now()}`,
       type: "quiz",
       title: quizTitle,
+      name: quizTitle, // untuk konsistensi
       description: quizDescription,
       questions: [...questions],
       passing_score: quiz.passing_score,
@@ -81,7 +108,13 @@ export default function QuizBuilder({
       max_attempts: quiz.max_attempts,
     };
 
-    onAddQuiz(item);
+    if (isEditMode && onUpdateQuiz) {
+      onUpdateQuiz(item);
+    } else {
+      onAddQuiz(item);
+    }
+
+    // onAddQuiz(item);
 
     // reset
     setQuizTitle("");
@@ -97,35 +130,76 @@ export default function QuizBuilder({
   return (
     <Card withBorder radius="md" p="lg">
       <Stack>
-        <Group justify="space-between">
-          <Text fw={600}>Quiz Builder</Text>
-          <Button leftSection={<IconPlus size={14} />} onClick={addQuestion}>
-            Tambah Pertanyaan
-          </Button>
-        </Group>
+        <Text fw={600}>Quiz Builder</Text>
 
+        {/* BAGIAN 1: DETAIL UTAMA KUIS (PINDAHKAN KE SINI) */}
         <TextInput
           label="Judul Kuis"
+          placeholder="Contoh: Kuis Bab 1 - Pengenalan"
           value={quizTitle}
           onChange={(e) => setQuizTitle(e.currentTarget.value)}
+          required
         />
         <Textarea
-          label="Instruksi (opsional)"
+          label="Instruksi Kuis (Opsional)"
+          placeholder="Jelaskan aturan dan topik kuis..."
           value={quizDescription}
           onChange={(e) => setQuizDescription(e.currentTarget.value)}
           minRows={2}
         />
+        <Group grow>
+          <TextInput
+            label="Passing Score (%)"
+            type="number"
+            placeholder="70"
+            value={quiz.passing_score || ""}
+            onChange={(e) =>
+              setQuiz({
+                ...quiz,
+                passing_score: parseInt(e.currentTarget.value, 10),
+              })
+            }
+          />
+          <TextInput
+            label="Batas Waktu (Menit)"
+            type="number"
+            placeholder="60"
+            value={quiz.time_limit || ""}
+            onChange={(e) =>
+              setQuiz({
+                ...quiz,
+                time_limit: parseInt(e.currentTarget.value, 10),
+              })
+            }
+          />
+          <TextInput
+            label="Maksimal Percobaan"
+            type="number"
+            placeholder="3"
+            value={quiz.max_attempts || ""}
+            onChange={(e) =>
+              setQuiz({
+                ...quiz,
+                max_attempts: parseInt(e.currentTarget.value, 10),
+              })
+            }
+          />
+        </Group>
 
+        <Divider my="xs" label="Pertanyaan Kuis" labelPosition="center" />
+
+        {/* BAGIAN 2: DAFTAR PERTANYAAN */}
         {questions.map((q, qi) => (
           <Card key={q.id} withBorder>
             <Stack>
               <Group justify="space-between">
                 <TextInput
-                  placeholder={`Pertanyaan ${qi + 1}`}
+                  placeholder={`Teks Pertanyaan ${qi + 1}`}
                   value={q.text}
                   onChange={(e) =>
                     updateQuestionText(qi, e.currentTarget.value)
                   }
+                  style={{ flex: 1 }}
                 />
                 <Select
                   value={q.type}
@@ -149,6 +223,7 @@ export default function QuizBuilder({
                       onChange={(e) =>
                         updateOptionText(qi, oi, e.currentTarget.value)
                       }
+                      style={{ flex: 1 }}
                     />
                     <Button
                       variant={o.is_correct ? "filled" : "light"}
@@ -173,46 +248,28 @@ export default function QuizBuilder({
                   Tambah Opsi
                 </Button>
               </Stack>
-              {/* Added quiz configuration fields */}
-              <TextInput
-                label="Passing Score"
-                type="number"
-                value={quiz.passing_score || ""}
-                onChange={(e) =>
-                  setQuiz({
-                    ...quiz,
-                    passing_score: parseInt(e.currentTarget.value, 10),
-                  })
-                }
-              />
-              <TextInput
-                label="Time Limit (minutes)"
-                type="number"
-                value={quiz.time_limit || ""}
-                onChange={(e) =>
-                  setQuiz({
-                    ...quiz,
-                    time_limit: parseInt(e.currentTarget.value, 10),
-                  })
-                }
-              />
-              <TextInput
-                label="Max Attempts"
-                type="number"
-                value={quiz.max_attempts || ""}
-                onChange={(e) =>
-                  setQuiz({
-                    ...quiz,
-                    max_attempts: parseInt(e.currentTarget.value, 10),
-                  })
-                }
-              />
             </Stack>
           </Card>
         ))}
 
-        <Button onClick={handleAddQuizToList} fullWidth>
-          Tambah Kuis ke Daftar Konten
+        {/* BAGIAN 3: TOMBOL AKSI */}
+        <Button
+          leftSection={<IconPlus size={14} />}
+          onClick={addQuestion}
+          variant="outline"
+        >
+          Tambah Pertanyaan Baru
+        </Button>
+
+        <Divider my="sm" />
+
+        <Button
+          onClick={handleAddOrUpdate}
+          fullWidth
+          size="md"
+          disabled={!quizTitle.trim() || questions.length === 0}
+        >
+          {isEditMode ? "Simpan Perubahan Kuis" : "Tambahkan Kuis"}
         </Button>
       </Stack>
     </Card>
