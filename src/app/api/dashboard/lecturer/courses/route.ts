@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Course, User, Enrollment } from "@/models"; // pastikan Enrollment ada
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { uploadCourseThumbnail } from "@/lib/utils/fileUtils";
+import { uploadCourseThumbnail } from "@/utils/fileUtils";
 import { Sequelize } from "sequelize";
 
 // ✅ GET all courses with student_count

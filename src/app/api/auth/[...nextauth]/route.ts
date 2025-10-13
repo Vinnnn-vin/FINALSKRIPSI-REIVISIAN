@@ -7,7 +7,7 @@ import NextAuth, {
 } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider, { GoogleProfile } from "next-auth/providers/google";
-import { User } from "@/models";
+import { User } from "@/models"; 
 import bcrypt from "bcrypt";
 
 export const authOptions: AuthOptions = {
@@ -80,32 +80,12 @@ export const authOptions: AuthOptions = {
               created_at: new Date(),
             });
           }
-
-          if (existingUser) {
-            if (
-              existingUser.password_hash &&
-              existingUser.password_hash !== "Login Google"
-            ) {
-              throw new Error(
-                "This email is already registered with a password. Please sign in using your password."
-              );
-            }
-            return true;
-          }
-
-          await User.create({
-            first_name: (profile as GoogleProfile)?.given_name,
-            last_name: (profile as GoogleProfile)?.family_name,
-            email: user.email!,
-            // password_hash: "Login Google", // <-- HAPUS BARIS INI
-            role: "student",
-          });
         } catch (error) {
           console.error("Error creating Google user:", error);
-          return false;
+          return false; 
         }
       }
-      return true;
+      return true; 
     },
     jwt({ token, user }) {
       if (user) {

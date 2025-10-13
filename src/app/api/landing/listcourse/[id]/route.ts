@@ -90,7 +90,7 @@ export async function GET(
     });
 
     // Get instructor's other courses count dengan akses yang aman
-    const instructor = courseData.instructor;
+    const instructor = courseData.lecturer;
     const instructorId = instructor?.user_id || courseData.user_id;
 
     const instructorCoursesCount = instructorId ? await Course.count({

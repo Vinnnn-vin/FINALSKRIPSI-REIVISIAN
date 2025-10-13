@@ -145,7 +145,7 @@ export async function GET(request: NextRequest) {
     const formattedCourses = await Promise.all(
       courses.map(async (course: any) => {
         const courseData = course.get({ plain: true });
-        const instructor = courseData.instructor;
+        const instructor = courseData.lecturer;
         const category = courseData.category;
 
         const studentCount = await Enrollment.count({

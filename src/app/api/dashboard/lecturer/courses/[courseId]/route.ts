@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Course, User } from '@/models';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import { cleanupOldThumbnails, uploadCourseThumbnail } from '@/lib/utils/fileUtils';
+import { cleanupOldThumbnails, uploadCourseThumbnail } from '@/utils/fileUtils';
 // import fs from 'fs';
 // import path from 'path';
 

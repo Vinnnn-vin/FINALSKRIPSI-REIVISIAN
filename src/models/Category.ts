@@ -11,12 +11,12 @@ class Category
   extends Model<CategoryInterface, CategoryCreationAttributes>
   implements CategoryInterface
 {
-  category_id!: number;
-  category_name?: string;
-  created_at?: Date;
-  category_description?: string;
-  image_url?: string;
-  course_count?: number;
+  declare category_id: number;
+  declare category_name?: string;
+  declare created_at?: Date;
+  declare category_description?: string;
+  declare image_url?: string;
+  declare course_count?: number;
 }
 
 Category.init(
