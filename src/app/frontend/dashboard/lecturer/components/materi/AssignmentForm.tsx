@@ -1,27 +1,10 @@
-// src\app\frontend\dashboard\lecturer\components\materi\AssignmentForm.tsx
 /* eslint-disable @typescript-eslint/no-explicit-any */
+// src/app/frontend/dashboard/lecturer/components/materi/AssignmentForm.tsx
 "use client";
 
-import React, { useEffect, useState } from "react";
-import {
-  Card,
-  Stack,
-  TextInput,
-  Textarea,
-  Button,
-  FileInput,
-  Progress,
-  Alert,
-  Group,
-  Text,
-  Switch,
-} from "@mantine/core";
-import {
-  IconUpload,
-  IconCheck,
-  IconX,
-  IconFileText,
-} from "@tabler/icons-react";
+import React, { useState, useEffect } from "react";
+import { Card, Stack, TextInput, Textarea, Button, FileInput, Progress, Alert, Group, Text, Switch } from "@mantine/core";
+import { IconUpload, IconCheck, IconX, IconFileText } from "@tabler/icons-react";
 import type { ContentItemType } from "../../types/material";
 
 interface AssignmentFormProps {
@@ -60,7 +43,7 @@ export default function AssignmentForm({
     if (isEditMode && initialData) {
       setTitle(initialData.title || "");
       setInstructions(initialData.instructions || "");
-      setDueDate(initialData.dueDate?.split("T")[0] || ""); // Format tanggal untuk input type="date"
+      setDueDate(initialData.dueDate?.split("T")[0] || "");
       if (initialData.attachmentUrl) {
         setHasAttachment(true);
         setUploadState({
@@ -69,6 +52,9 @@ export default function AssignmentForm({
           url: initialData.attachmentUrl,
           error: null,
         });
+      } else {
+        setHasAttachment(false);
+        setUploadState({ uploading: false, progress: 0, url: null, error: null });
       }
     } else {
       setTitle("");
@@ -77,18 +63,14 @@ export default function AssignmentForm({
       setHasAttachment(false);
       setUploadState({ uploading: false, progress: 0, url: null, error: null });
     }
-  }, [initialData, isEditMode]);
+  }, [initialData]);
+
   const uploadAttachment = async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("type", "assignment");
 
-    setUploadState((prev) => ({
-      ...prev,
-      uploading: true,
-      progress: 0,
-      error: null,
-    }));
+    setUploadState((prev) => ({ ...prev, uploading: true, progress: 0, error: null }));
 
     try {
       const response = await fetch("/api/dashboard/lecturer/upload", {
@@ -127,74 +109,23 @@ export default function AssignmentForm({
     }
   };
 
-  // const handleAdd = async () => {
-  //   if (!title.trim()) {
-  //     alert("Judul tugas harus diisi");
-  //     return;
-  //   }
-
-  //   if (!instructions.trim()) {
-  //     alert("Instruksi tugas harus diisi");
-  //     return;
-  //   }
-
-  //   try {
-  //     let attachmentUrl = "";
-
-  //     // Upload attachment if provided
-  //     if (hasAttachment && attachmentFile) {
-  //       attachmentUrl = await uploadAttachment(attachmentFile);
-  //     }
-
-  //     const item: ContentItemType = {
-  //       id: `a-${Date.now()}`,
-  //       type: "assignment",
-  //       title,
-  //       instructions,
-  //       dueDate: dueDate || undefined,
-  //       attachmentUrl: attachmentUrl || undefined,
-  //     };
-
-  //     onAddAssignment(item);
-
-  //     // Reset form
-  //     setTitle("");
-  //     setInstructions("");
-  //     setDueDate("");
-  //     setAttachmentFile(null);
-  //     setHasAttachment(false);
-  //     setUploadState({
-  //       uploading: false,
-  //       progress: 0,
-  //       url: null,
-  //       error: null,
-  //     });
-
-  //     alert("Tugas berhasil ditambahkan!");
-  //   } catch (error: any) {
-  //     console.error("Error adding assignment:", error);
-  //     alert(`Gagal menambahkan tugas: ${error.message}`);
-  //   }
-  // };
-
   const handleAddOrUpdate = async () => {
     if (!title.trim() || !instructions.trim()) {
       alert("Judul dan instruksi tugas harus diisi");
       return;
     }
-
-    if (hasAttachment && !uploadState.url && attachmentFile) {
-      alert("Harap tunggu hingga file lampiran selesai diunggah.");
-      return;
+    if (hasAttachment && !uploadState.url) {
+       alert("Harap tunggu hingga file lampiran selesai diunggah.");
+       return;
     }
-
+    
     const item: ContentItemType = {
-      id: isEditMode ? initialData.id : `a-${Date.now()}`,
+      id: isEditMode ? initialData.id : `a-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
       type: "assignment",
       title,
       instructions,
-      name: title, // Pastikan 'name' diisi untuk konsistensi
-      description: instructions, // Pastikan 'description' diisi
+      name: title,
+      description: instructions,
       dueDate: dueDate || undefined,
       attachmentUrl: uploadState.url || undefined,
     };
@@ -215,43 +146,44 @@ export default function AssignmentForm({
           label="File Lampiran (opsional)"
           placeholder="Pilih file lampiran untuk tugas..."
           value={attachmentFile}
-          onChange={setAttachmentFile}
+          // [FIX] Tambahkan logika untuk trigger upload otomatis di sini
+          onChange={async (file) => {
+            setAttachmentFile(file);
+            if (file) {
+              try {
+                await uploadAttachment(file);
+              } catch (error) {
+                console.error("Auto-upload failed:", error);
+              }
+            } else {
+              // Reset state jika file dibersihkan
+              setUploadState({ uploading: false, progress: 0, url: null, error: null });
+            }
+          }}
           accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png"
           leftSection={<IconUpload size={14} />}
           disabled={uploadState.uploading}
-          description="File yang akan diberikan kepada student sebagai referensi atau template"
+          description="File akan diunggah secara otomatis setelah dipilih."
         />
-
         <Text size="xs" c="dimmed">
-          Tipe file yang didukung: PDF, DOC, DOCX, XLS, XLSX, TXT, JPG, PNG
-          (Maks. 50MB)
+          Tipe file: PDF, DOC, DOCX, XLS, XLSX, TXT, JPG, PNG (Maks. 50MB)
         </Text>
-
         {uploadState.uploading && (
           <Stack gap="xs">
             <Text size="sm">Mengupload lampiran...</Text>
             <Progress value={uploadState.progress} animated />
           </Stack>
         )}
-
         {uploadState.url && (
           <Alert color="green" icon={<IconCheck size={16} />}>
             <Group justify="space-between">
-              <Text size="sm">File lampiran berhasil diupload</Text>
-              <Button
-                size="xs"
-                variant="subtle"
-                component="a"
-                href={uploadState.url}
-                target="_blank"
-                leftSection={<IconFileText size={12} />}
-              >
+              <Text size="sm">File lampiran berhasil diunggah</Text>
+              <Button size="xs" variant="subtle" component="a" href={uploadState.url} target="_blank" leftSection={<IconFileText size={12} />}>
                 Preview
               </Button>
             </Group>
           </Alert>
         )}
-
         {uploadState.error && (
           <Alert color="red" icon={<IconX size={16} />}>
             Error upload: {uploadState.error}
@@ -271,62 +203,36 @@ export default function AssignmentForm({
           onChange={(e) => setTitle(e.currentTarget.value)}
           required
         />
-
         <Textarea
           label="Instruksi Tugas"
-          placeholder="Jelaskan secara detail apa yang harus dikerjakan mahasiswa, kriteria penilaian, format pengumpulan, dll."
+          placeholder="Jelaskan secara detail apa yang harus dikerjakan mahasiswa..."
           minRows={4}
           value={instructions}
           onChange={(e) => setInstructions(e.currentTarget.value)}
           required
         />
-
         <TextInput
           type="date"
           label="Tanggal Deadline (opsional)"
           value={dueDate}
           onChange={(e) => setDueDate(e.currentTarget.value)}
-          description="Jika kosong, tugas tidak memiliki deadline khusus"
         />
-
         <Switch
           label="Tambahkan File Lampiran"
-          description="Upload file referensi, template, atau contoh untuk membantu student mengerjakan tugas"
           checked={hasAttachment}
           onChange={(e) => {
             setHasAttachment(e.currentTarget.checked);
             if (!e.currentTarget.checked) {
               setAttachmentFile(null);
-              setUploadState({
-                uploading: false,
-                progress: 0,
-                url: null,
-                error: null,
-              });
+              setUploadState({ uploading: false, progress: 0, url: null, error: null });
             }
           }}
         />
-
         {renderAttachmentUpload()}
-
-        <Group justify="space-between" mt="md">
-          <Stack gap={0}>
-            <Text size="sm" fw={500}>
-              Ringkasan Tugas:
-            </Text>
-            <Text size="xs" c="dimmed">
-              {title || "Belum ada judul"}
-              {dueDate &&
-                ` • Deadline: ${new Date(dueDate).toLocaleDateString("id-ID")}`}
-              {uploadState.url && " • Ada lampiran"}
-            </Text>
-          </Stack>
-
+        <Group justify="flex-end" mt="md">
           <Button
             onClick={handleAddOrUpdate}
-            disabled={
-              !title.trim() || !instructions.trim() || uploadState.uploading
-            }
+            disabled={!title.trim() || !instructions.trim() || uploadState.uploading}
             loading={uploadState.uploading}
           >
             {isEditMode ? "Simpan Perubahan" : "Tambah Tugas"}

@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
     const newCourse = await Course.create({
       course_title,
       course_description: course_description || '',
-      course_level: course_level || 'beginner',
+      course_level: course_level || 'Beginner',
       course_price: course_price || 0,
       publish_status: 0, // Default to draft
       user_id, // ID Dosen yang dipilih

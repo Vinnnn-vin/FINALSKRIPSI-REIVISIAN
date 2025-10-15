@@ -16,7 +16,7 @@ export async function GET(
   context: { params: { courseId: string } }
 ) {
   try {
-    const { courseId } = await context.params; // <-- tambah await
+    const { courseId } = await context.params; 
     const id = Number(courseId);
 
     if (isNaN(id)) {

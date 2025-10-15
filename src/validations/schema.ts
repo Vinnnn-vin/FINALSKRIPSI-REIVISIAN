@@ -26,7 +26,7 @@ export const CourseSchema = z.object({
   course_id: z.number().optional(),
   course_title: z.string().min(1).max(255).optional(),
   course_description: z.string().optional(),
-  course_level: z.enum(['beginner', 'intermediate', 'advanced']).optional(),
+  course_level: z.enum(['Beginner', 'intermediate', 'advanced']).optional(),
   course_price: z.number().min(0).optional(),
   course_duration: z.number().min(1).optional(),
   publish_status: z.number().min(0).max(1).optional(),

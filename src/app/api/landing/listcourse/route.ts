@@ -203,7 +203,7 @@ export async function GET(request: NextRequest) {
                 )}`
               : null,
           category: category?.category_name || "General",
-          level: courseData.course_level || "beginner",
+          level: courseData.course_level || "Beginner",
           description:
             courseData.course_description || "No description available",
           isBestseller: studentCount > 100,

@@ -23,58 +23,59 @@ async function getDetailIfOwner(detailId: number, lecturerId: string) {
   return materialDetail;
 }
 
-// PUT: Memperbarui satu pelajaran
+async function getMaterialIfOwner(materialId: number, lecturerId: string) {
+  return await Material.findOne({
+    where: { material_id: materialId },
+    include: [{ model: Course, as: 'course', required: true, where: { user_id: lecturerId } }]
+  });
+}
+
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { detailId: string } }
+  { params }: { params: { id: string } }
 ) {
   const session = await getServerSession(authOptions);
   const lecturerId = (session?.user as any)?.id;
-  const detailId = parseInt(params.detailId, 10);
+  const materialId = parseInt(params.id, 10);
 
   if (!session || (session.user as any)?.role !== "lecturer") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
-  if (isNaN(detailId)) {
-    return NextResponse.json({ error: "Invalid detail ID" }, { status: 400 });
+  if (isNaN(materialId)) {
+    return NextResponse.json({ error: "Invalid Material ID" }, { status: 400 });
   }
 
   try {
-    const materialDetail = await getDetailIfOwner(detailId, lecturerId);
-    if (!materialDetail) {
-      return NextResponse.json({ error: "Lesson not found or permission denied" }, { status: 404 });
+    const material = await getMaterialIfOwner(materialId, lecturerId);
+    if (!material) {
+      return NextResponse.json({ error: "Material not found or permission denied" }, { status: 404 });
     }
-
+    
     const body = await req.json();
-    const { material_detail_name, material_detail_description, is_free, materi_detail_url } = body;
+    const { material_name, material_description } = body;
 
-    // Lakukan validasi dasar
-    if (!material_detail_name || material_detail_name.trim() === "") {
-        return NextResponse.json({ error: "Lesson title cannot be empty" }, { status: 400 });
-    }
-
-    await materialDetail.update({
-      material_detail_name,
-      material_detail_description,
-      is_free,
-      materi_detail_url,
+    // Lakukan update dengan data dari body
+    await material.update({
+      material_name,
+      material_description,
     });
+    
+    return NextResponse.json({ success: true, message: 'Material updated successfully', material });
 
-    return NextResponse.json({ success: true, materialDetail });
   } catch (error: any) {
-    console.error("Error updating material detail:", error);
-    return NextResponse.json({ error: "Failed to update lesson" }, { status: 500 });
+    console.error("Error updating material:", error);
+    return NextResponse.json({ error: "Failed to update material" }, { status: 500 });
   }
 }
 
-// DELETE: Menghapus satu pelajaran
+
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { detailId: string } }
+  { params }: { params: Promise<{ detailId: string }> }
 ) {
     const session = await getServerSession(authOptions);
     const lecturerId = (session?.user as any)?.id;
-    const detailId = parseInt(params.detailId, 10);
+    const detailId = parseInt((await params).detailId, 10);
   
     if (!session || (session.user as any)?.role !== "lecturer") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });

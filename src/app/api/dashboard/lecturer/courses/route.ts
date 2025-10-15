@@ -22,7 +22,6 @@ export async function GET(req: NextRequest) {
       where: { user_id: lecturerId },
       attributes: {
         include: [
-          // hitung jumlah student dari Enrollment
           [
             Sequelize.fn("COUNT", Sequelize.col("enrollments.id")),
             "student_count",
@@ -32,7 +31,7 @@ export async function GET(req: NextRequest) {
       include: [
         {
           model: Enrollment,
-          as: "enrollments", // pastikan alias sesuai di model
+          as: "enrollments", 
           attributes: [],
         },
       ],
@@ -83,7 +82,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const allowedLevels = ["beginner", "intermediate", "advanced"];
+    const allowedLevels = ["Beginner", "Intermediate", "Advanced"];
     if (!allowedLevels.includes(courseLevel)) {
       return NextResponse.json(
         { error: "Invalid course level", allowedLevels, received: courseLevel },

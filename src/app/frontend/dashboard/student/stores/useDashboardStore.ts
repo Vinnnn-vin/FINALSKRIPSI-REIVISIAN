@@ -163,7 +163,7 @@ const useDashboardStore = create<DashboardStore>((set, get) => ({
             bValue = b.course.course_price || 0;
             break;
           case "level":
-            const levelOrder = { beginner: 1, intermediate: 2, advanced: 3 };
+            const levelOrder = { Beginner: 1, intermediate: 2, advanced: 3 };
             aValue = levelOrder[a.course.course_level as keyof typeof levelOrder] || 0;
             bValue = levelOrder[b.course.course_level as keyof typeof levelOrder] || 0;
             break;
@@ -200,7 +200,7 @@ const useDashboardStore = create<DashboardStore>((set, get) => ({
             bValue = b.course_price || 0;
             break;
           case "level":
-            const levelOrder = { beginner: 1, intermediate: 2, advanced: 3 };
+            const levelOrder = { Beginner: 1, intermediate: 2, advanced: 3 };
             aValue = levelOrder[a.course_level as keyof typeof levelOrder] || 0;
             bValue = levelOrder[b.course_level as keyof typeof levelOrder] || 0;
             break;

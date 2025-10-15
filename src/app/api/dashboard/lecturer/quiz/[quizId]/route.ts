@@ -16,6 +16,7 @@ async function verifyQuizOwner(lecturerId: string, quizId: number) {
         model: Course,
         where: { user_id: lecturerId },
         required: true,
+        as: "course",
       },
     ],
   });
@@ -109,8 +110,6 @@ export async function PUT(
               quiz_id: quizId,
               question_text: question.text,
               question_type: question.type,
-              question_order: i + 1,
-              points: 10,
             },
             { transaction }
           );
@@ -152,7 +151,7 @@ export async function PUT(
 // DELETE: Delete quiz and all related data
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { quizId: string } }
+  { params }: { params: Promise<{ quizId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -162,7 +161,7 @@ export async function DELETE(
     }
 
     const lecturerId = (session.user as any)?.id;
-    const quizId = parseInt(params.quizId, 10);
+    const quizId = parseInt((await params).quizId, 10);
 
     if (isNaN(quizId)) {
       return NextResponse.json({ error: "Invalid quiz ID" }, { status: 400 });

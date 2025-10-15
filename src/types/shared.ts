@@ -3,7 +3,7 @@
 import { CourseDisplayData } from "./landing";
 
 export type UserRole = "student" | "lecturer" | "admin";
-export type CourseLevel = "beginner" | "intermediate" | "advanced";
+export type CourseLevel = "Beginner" | "Intermediate" | "Advanced";
 
 // Fixed: Changed to match database schema (integer)
 export type MaterialDetailTypeId = 1 | 2 | 3 | 4;

@@ -15,7 +15,7 @@ interface DashboardState {
   // State UI
   activeTab: string;
   searchTerm: string;
-  filterLevel: string; // 'all', 'beginner', etc.
+  filterLevel: string; // 'all', 'Beginner', etc.
   enrollingCourseIds: Set<number>; // Untuk loading button enroll
 }
 

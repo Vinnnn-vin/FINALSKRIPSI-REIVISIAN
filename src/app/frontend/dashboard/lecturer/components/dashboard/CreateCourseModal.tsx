@@ -1,5 +1,4 @@
 // src\app\frontend\dashboard\lecturer\components\dashboard\CreateCourseModal.tsx
-/* eslint-disable react/no-unescaped-entities */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
@@ -11,32 +10,30 @@ import {
   TextInput,
   Textarea,
   Select,
-  NumberInput,
-  FileInput,
   Button,
   Group,
   LoadingOverlay,
-  Paper,
   Text,
   ThemeIcon,
   Box,
-  Stepper,
-  Progress,
+  Tabs,
   Alert,
-  Divider
+  Tooltip,
+  FileInput,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
-import { 
-  IconUpload, 
-  IconCheck, 
-  IconInfoCircle, 
-  IconBook, 
-  IconSettings, 
+import {
+  IconUpload,
+  IconCheck,
+  IconInfoCircle,
+  IconBook,
+  IconSettings,
   IconPhoto,
   IconSparkles,
-  IconCurrencyDollar
+  IconAlertCircle,
 } from "@tabler/icons-react";
+
 import { CategoryOptionType } from "../../types/lecturer";
 import { CourseType } from "../../types/course";
 
@@ -53,34 +50,39 @@ export default function CreateCourseModal({
 }: CreateCourseModalProps) {
   const [categories, setCategories] = useState<CategoryOptionType[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeStep, setActiveStep] = useState(0);
+  const [activeTab, setActiveTab] = useState<string | null>("info");
 
   const form = useForm({
     initialValues: {
       course_title: "",
       course_description: "",
-      course_level: "beginner",
+      course_level: "Beginner",
       category_id: "",
       course_price: 0,
       thumbnail: null as File | null,
     },
+    validateInputOnBlur: true,
     validate: {
       course_title: (value) =>
         value.trim().length < 5 ? "Judul kursus minimal 5 karakter" : null,
       course_description: (value) =>
         value.trim().length < 20 ? "Deskripsi minimal 20 karakter" : null,
       category_id: (value) => (value ? null : "Kategori harus dipilih"),
-      course_price: (value) => (value < 0 ? "Harga tidak boleh negatif" : null),
     },
   });
 
-  // Calculate form completion progress
-  const calculateProgress = () => {
-    const fields = ['course_title', 'course_description', 'category_id'];
-    const completed = fields.filter(field => 
-      form.values[field as keyof typeof form.values]
-    ).length;
-    return Math.round((completed / fields.length) * 100);
+  const isTabValid = (tabName: "info" | "settings") => {
+    if (tabName === "info") {
+      return !form.errors.course_title && !form.errors.course_description;
+    }
+    if (tabName === "settings") {
+      return (
+        !form.errors.course_level &&
+        !form.errors.category_id &&
+        !form.errors.course_price
+      );
+    }
+    return true;
   };
 
   useEffect(() => {
@@ -88,13 +90,13 @@ export default function CreateCourseModal({
       const fetchCategories = async () => {
         try {
           const response = await fetch("/api/dashboard/lecturer/categories");
-          if (!response.ok) throw new Error("Gagal memuat daftar kategori");
+          if (!response.ok) throw new Error("Gagal memuat kategori");
           const data = await response.json();
           setCategories(data);
         } catch (error) {
           notifications.show({
             title: "Gagal Memuat Kategori",
-            message: "Silakan coba muat ulang halaman.",
+            message: "Silakan coba lagi.",
             color: "orange",
           });
         }
@@ -137,9 +139,7 @@ export default function CreateCourseModal({
       });
 
       onCourseCreated(result.course);
-      form.reset();
-      setActiveStep(0);
-      onClose();
+      handleClose();
     } catch (error: any) {
       notifications.show({
         title: "Gagal Membuat Kursus",
@@ -152,284 +152,189 @@ export default function CreateCourseModal({
     }
   };
 
-  const nextStep = () => setActiveStep((current) => (current < 2 ? current + 1 : current));
-  const prevStep = () => setActiveStep((current) => (current > 0 ? current - 1 : current));
+  const handleClose = () => {
+    form.reset();
+    setActiveTab("info");
+    onClose();
+  };
+
+  const getTooltipMessage = () => {
+    if (form.isValid()) return "";
+
+    const errors = [];
+    if (form.errors.course_title) errors.push("Judul");
+    if (form.errors.course_description) errors.push("Deskripsi");
+    if (form.errors.category_id) errors.push("Kategori");
+
+    if (errors.length === 0) return "Harap lengkapi semua kolom wajib.";
+    return `Harap perbaiki: ${errors.join(", ")}`;
+  };
 
   return (
     <Modal
       opened={opened}
-      onClose={onClose}
+      onClose={handleClose}
       title={
         <Group>
-          <ThemeIcon size="lg" radius="xl" style={{ 
-            background: "linear-gradient(45deg, #667eea, #764ba2)" 
-          }}>
-            <IconSparkles size={20} color="white" />
+          <ThemeIcon
+            size="lg"
+            radius="xl"
+            gradient={{ from: "indigo", to: "cyan" }}
+          >
+            <IconSparkles size={20} />
           </ThemeIcon>
           <div>
-            <Text size="lg" fw={600}>Buat Kursus Baru</Text>
-            <Text size="sm" c="dimmed">Berbagi pengetahuan Anda dengan dunia</Text>
+            <Text size="lg" fw={600}>
+              Buat Kursus Baru
+            </Text>
+            <Text size="sm" c="dimmed">
+              Isi detail kursus Anda di bawah ini
+            </Text>
           </div>
         </Group>
       }
       centered
       size="xl"
-      radius="xl"
-      closeOnClickOutside={false}
-      styles={{
-        header: { padding: "24px" },
-        body: { padding: "0 24px 24px 24px" }
-      }}
+      radius="lg"
     >
-      <Box>
-        {/* Progress Bar */}
-        <Paper p="md" mb="xl" radius="xl" style={{ 
-          background: "linear-gradient(135deg, #f8f9ff, #f0f4ff)" 
-        }}>
-          <Group justify="space-between" mb="xs">
-            <Text size="sm" fw={500}>Progress Pengisian</Text>
-            <Text size="sm" fw={600} c="blue">{calculateProgress()}%</Text>
-          </Group>
-          <Progress value={calculateProgress()} radius="xl" size="sm" />
-        </Paper>
+      <form onSubmit={form.onSubmit(handleSubmit)}>
+        <LoadingOverlay visible={isSubmitting} />
 
-        {/* Stepper */}
-        <Stepper active={activeStep} onStepClick={setActiveStep} mb="xl" radius="xl">
-          <Stepper.Step 
-            label="Informasi Dasar" 
-            description="Judul dan deskripsi"
-            icon={<IconBook size={18} />}
-          >
-            <Stack gap="lg" mt="xl">
-              <Alert 
-                icon={<IconInfoCircle size={16} />} 
-                title="Tips Membuat Judul Menarik"
-                color="blue" 
-                variant="light"
-                radius="xl"
-              >
-                Gunakan kata kunci yang jelas dan spesifik. Contoh: "Masterclass React.js untuk Pemula" 
-                lebih baik dari "Belajar Programming"
-              </Alert>
+        <Tabs
+          value={activeTab}
+          onChange={setActiveTab}
+          radius="md"
+          variant="pills"
+        >
+          <Tabs.List grow>
+            <Tabs.Tab
+              value="info"
+              leftSection={<IconBook size={16} />}
+              rightSection={
+                !isTabValid("info") && <IconAlertCircle size={16} color="red" />
+              }
+            >
+              Informasi Dasar
+            </Tabs.Tab>
+            <Tabs.Tab
+              value="settings"
+              leftSection={<IconSettings size={16} />}
+              rightSection={
+                !isTabValid("settings") && (
+                  <IconAlertCircle size={16} color="red" />
+                )
+              }
+            >
+              Pengaturan
+            </Tabs.Tab>
+            <Tabs.Tab value="media" leftSection={<IconPhoto size={16} />}>
+              Media
+            </Tabs.Tab>
+          </Tabs.List>
 
-              <TextInput
-                label="Judul Kursus"
-                placeholder="Contoh: Masterclass Next.js - Dari Dasar hingga Deployment"
-                required
-                size="md"
-                radius="xl"
-                styles={{
-                  input: {
-                    border: "2px solid #e9ecef",
-                    "&:focus": { borderColor: "#667eea" }
-                  }
-                }}
-                {...form.getInputProps("course_title")}
-              />
-
-              <Textarea
-                label="Deskripsi Kursus"
-                placeholder="Jelaskan secara detail tentang kursus ini, siapa target audiensnya, dan apa saja yang akan dipelajari siswa..."
-                required
-                minRows={4}
-                size="md"
-                radius="xl"
-                styles={{
-                  input: {
-                    border: "2px solid #e9ecef",
-                    "&:focus": { borderColor: "#667eea" }
-                  }
-                }}
-                {...form.getInputProps("course_description")}
-              />
-            </Stack>
-          </Stepper.Step>
-
-          <Stepper.Step 
-            label="Pengaturan Kursus" 
-            description="Level, kategori, dan harga"
-            icon={<IconSettings size={18} />}
-          >
-            <Stack gap="lg" mt="xl">
-              <Group grow>
-                <Select
-                  label="Level Kursus"
-                  data={[
-                    { value: "beginner", label: "Beginner - Untuk pemula" },
-                    { value: "intermediate", label: "Intermediate - Sudah ada dasar" },
-                    { value: "advanced", label: "Advanced - Tingkat lanjut" }
-                  ]}
+          <Box pt="xl">
+            <Tabs.Panel value="info">
+              <Stack gap="lg">
+                <Alert
+                  icon={<IconInfoCircle size={16} />}
+                  title="Tips"
+                  color="blue"
+                  variant="light"
+                  radius="md"
+                >
+                  Gunakan judul yang jelas dan deskripsi yang menarik untuk
+                  menarik minat siswa.
+                </Alert>
+                <TextInput
+                  label="Judul Kursus"
+                  placeholder="Contoh: Masterclass Next.js - Dari Dasar hingga Deployment"
                   required
                   size="md"
-                  radius="xl"
-                  styles={{
-                    input: {
-                      border: "2px solid #e9ecef",
-                      "&:focus": { borderColor: "#667eea" }
-                    }
-                  }}
-                  {...form.getInputProps("course_level")}
+                  radius="md"
+                  {...form.getInputProps("course_title")}
                 />
-
-                <Select
-                  label="Kategori Kursus"
-                  placeholder="Pilih kategori yang sesuai"
-                  data={categories}
+                <Textarea
+                  label="Deskripsi Kursus"
+                  placeholder="Jelaskan secara detail tentang kursus ini..."
                   required
-                  searchable
+                  minRows={5}
                   size="md"
-                  radius="xl"
-                  nothingFoundMessage="Kategori tidak ditemukan..."
-                  styles={{
-                    input: {
-                      border: "2px solid #e9ecef",
-                      "&:focus": { borderColor: "#667eea" }
-                    }
-                  }}
-                  {...form.getInputProps("category_id")}
+                  radius="md"
+                  {...form.getInputProps("course_description")}
                 />
-              </Group>
+              </Stack>
+            </Tabs.Panel>
 
-              <Paper p="lg" radius="xl" style={{ 
-                background: "linear-gradient(135deg, #fff7ed, #fef3c7)" 
-              }}>
-                <Group mb="md">
-                  <ThemeIcon color="yellow" variant="light" size="sm" radius="xl">
-                    <IconCurrencyDollar size={14} />
-                  </ThemeIcon>
-                  <Text fw={500}>Penetapan Harga</Text>
+            <Tabs.Panel value="settings">
+              <Stack gap="lg">
+                <Group grow>
+                  <Select
+                    label="Level Kursus"
+                    data={["Beginner", "Intermediate", "Advanced"]}
+                    required
+                    size="md"
+                    radius="md"
+                    {...form.getInputProps("course_level")}
+                  />
+                  <Select
+                    label="Kategori Kursus"
+                    data={categories}
+                    required
+                    searchable
+                    size="md"
+                    radius="md"
+                    {...form.getInputProps("category_id")}
+                  />
                 </Group>
-                {/* <NumberInput
-                  label="Harga Kursus (Rupiah)"
-                  placeholder="Masukkan 0 untuk kursus gratis"
-                  min={0}
-                  step={50000}
-                  required
-                  size="md"
-                  radius="xl"
-                  styles={{
-                    input: {
-                      border: "2px solid #fbbf24",
-                      "&:focus": { borderColor: "#f59e0b" }
-                    }
-                  }}
-                  {...form.getInputProps("course_price")}
-                /> */}
-                <Text size="xs" c="dimmed" mt="xs">
-                  Tip: Kursus gratis mendapat lebih banyak siswa, tapi kursus berbayar menunjukkan value
-                </Text>
-              </Paper>
-            </Stack>
-          </Stepper.Step>
+              </Stack>
+            </Tabs.Panel>
 
-          <Stepper.Step 
-            label="Media & Publikasi" 
-            description="Thumbnail dan final"
-            icon={<IconPhoto size={18} />}
-          >
-            <Stack gap="lg" mt="xl">
-              <Paper p="lg" radius="xl" style={{ 
-                background: "linear-gradient(135deg, #f3e8ff, #ede9fe)" 
-              }}>
-                <Group mb="md">
-                  <ThemeIcon color="violet" variant="light" size="sm" radius="xl">
-                    <IconPhoto size={14} />
-                  </ThemeIcon>
-                  <Text fw={500}>Thumbnail Kursus</Text>
-                </Group>
+            <Tabs.Panel value="media">
+              <Stack gap="lg">
                 <FileInput
+                  label="Thumbnail Kursus"
+                  description="Ukuran optimal: 1280x720px. Format: JPG atau PNG."
                   placeholder="Pilih gambar thumbnail..."
                   accept="image/png,image/jpeg"
                   leftSection={<IconUpload size={16} />}
                   size="md"
-                  radius="xl"
-                  styles={{
-                    input: {
-                      border: "2px dashed #a855f7",
-                      "&:focus": { borderColor: "#9333ea" }
-                    }
-                  }}
+                  radius="md"
                   {...form.getInputProps("thumbnail")}
                 />
-                <Text size="xs" c="dimmed" mt="xs">
-                  Ukuran optimal: 1280x720px. Format: JPG atau PNG. Maksimal 5MB.
-                </Text>
-              </Paper>
+              </Stack>
+            </Tabs.Panel>
+          </Box>
+        </Tabs>
 
-              <Alert 
-                icon={<IconCheck size={16} />}
-                title="Siap untuk Publikasi!" 
-                color="green" 
-                variant="light"
-                radius="xl"
-              >
-                Kursus akan dibuat dalam status "Draft". Anda dapat mengeditnya kapan saja 
-                dan mempublikasikannya setelah menambahkan materi pembelajaran.
-              </Alert>
-            </Stack>
-          </Stepper.Step>
-        </Stepper>
-
-        <Divider my="xl" />
-
-        {/* Navigation Buttons */}
-        <Group justify="space-between">
-          <Button 
-            variant="default" 
-            onClick={prevStep}
-            disabled={activeStep === 0}
-            radius="xl"
-            size="md"
-          >
-            Sebelumnya
+        <Group
+          justify="flex-end"
+          mt="xl"
+          pt="md"
+          style={{ borderTop: "1px solid #e9ecef" }}
+        >
+          <Button variant="default" onClick={handleClose} radius="md" size="md">
+            Batal
           </Button>
-
-          <Group>
-            <Button 
-              variant="default" 
-              onClick={onClose} 
-              disabled={isSubmitting}
-              radius="xl"
-              size="md"
-            >
-              Batal
-            </Button>
-            
-            {activeStep === 2 ? (
-              <Button 
-                onClick={() => form.onSubmit(handleSubmit)()} 
+          <Tooltip
+            label={getTooltipMessage()}
+            position="top"
+            withArrow
+            disabled={form.isValid()}
+          >
+            <Box>
+              <Button
+                type="submit"
                 loading={isSubmitting}
-                leftSection={<IconSparkles size={16} />}
                 size="md"
-                radius="xl"
-                style={{
-                  background: "linear-gradient(45deg, #667eea, #764ba2)"
-                }}
+                radius="md"
+                disabled={!form.isValid()}
               >
                 Buat Kursus
               </Button>
-            ) : (
-              <Button 
-                onClick={nextStep}
-                size="md"
-                radius="xl"
-                style={{
-                  background: "linear-gradient(45deg, #667eea, #764ba2)"
-                }}
-              >
-                Selanjutnya
-              </Button>
-            )}
-          </Group>
+            </Box>
+          </Tooltip>
         </Group>
-
-        <LoadingOverlay
-          visible={isSubmitting}
-          zIndex={1000}
-          overlayProps={{ radius: "xl", blur: 2 }}
-          loaderProps={{ color: "blue", type: "bars" }}
-        />
-      </Box>
+      </form>
     </Modal>
   );
 }

@@ -53,32 +53,22 @@ export default function ContentForm({
   });
 
   useEffect(() => {
-    if (isEditMode && initialData) {
-      setLessonName(initialData.name || "");
-      setLessonDescription(initialData.description || "");
-      setLessonType(initialData.lessonType || "url");
-      setIsFree(initialData.isFree || false);
-      if (initialData.lessonType === "url") {
-        setLessonUrl(initialData.url || "");
-      } else if (initialData.url) {
-        setUploadState({
-          uploading: false,
-          progress: 100,
-          url: initialData.url,
-          error: null,
-        });
-      }
-    } else {
-      // Reset form jika bukan mode edit
-      setLessonName("");
-      setLessonDescription("");
-      setLessonUrl("");
-      setLessonFile(null);
-      setIsFree(false);
-      setLessonType("url");
-      setUploadState({ uploading: false, progress: 0, url: null, error: null });
+  if (isEditMode && initialData) {
+    setLessonName(initialData.name || "");
+    setLessonDescription(initialData.description || "");
+    setLessonType(initialData.lessonType || "url");
+    setIsFree(initialData.isFree || false);
+    if (initialData.lessonType === 'url') {
+      setLessonUrl(initialData.url || "");
+    } else if (initialData.url) {
+      setUploadState({ uploading: false, progress: 100, url: initialData.url, error: null });
     }
-  }, [initialData, isEditMode]);
+  } else {
+    setLessonName(""); setLessonDescription(""); setLessonUrl(""); setLessonFile(null);
+    setIsFree(false); setLessonType("url");
+    setUploadState({ uploading: false, progress: 0, url: null, error: null });
+  }
+}, [initialData]);
 
   const uploadFile = async (file: File, category: string): Promise<string> => {
     const formData = new FormData();

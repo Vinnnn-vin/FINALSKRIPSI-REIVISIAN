@@ -16,7 +16,7 @@ const CourseFilters: React.FC<CourseFiltersProps> = ({
   } = useCourseStore();
 
   const levels = [
-    { value: 'beginner', label: 'Beginner' },
+    { value: 'Beginner', label: 'Beginner' },
     { value: 'intermediate', label: 'Intermediate' },
     { value: 'advanced', label: 'Advanced' }
   ];

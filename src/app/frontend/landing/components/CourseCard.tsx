@@ -241,7 +241,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
                   color: "#667eea",
                 }}
               >
-                {course.level?.toUpperCase() || "BEGINNER"}
+                {course.level?.toUpperCase() || "Beginner"}
               </Badge>
 
               <Title

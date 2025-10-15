@@ -7,7 +7,7 @@ import type { Course } from "@/types/course";
  */
 export function getLevelColor(level?: string): string {
   switch (level?.toLowerCase()) {
-    case "beginner":
+    case "Beginner":
       return "green";
     case "intermediate":
       return "blue";

@@ -61,7 +61,7 @@ export const useAdminDashboard = () => {
   const [courseFormData, setCourseFormData] = useState({
     course_title: "",
     course_description: "",
-    course_level: "beginner",
+    course_level: "Beginner",
     course_price: 0,
     user_id: 0,
     publish_status: 0,
@@ -208,7 +208,7 @@ export const useAdminDashboard = () => {
     setCourseFormData({
       course_title: "",
       course_description: "",
-      course_level: "beginner",
+      course_level: "Beginner",
       course_price: 0,
       user_id: 0,
       publish_status: 0,

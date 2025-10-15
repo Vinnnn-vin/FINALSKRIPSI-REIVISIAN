@@ -238,9 +238,9 @@ export async function GET() {
 
     // Course level distribution
     const courseLevelDistribution = {
-      beginner: coursesData.filter(c => c.course_level === 'beginner').length,
-      intermediate: coursesData.filter(c => c.course_level === 'intermediate').length,
-      advanced: coursesData.filter(c => c.course_level === 'advanced').length,
+      Beginner: coursesData.filter(c => c.course_level === 'Beginner').length,
+      intermediate: coursesData.filter(c => c.course_level === 'Intermediate').length,
+      advanced: coursesData.filter(c => c.course_level === 'Advanced').length,
     };
 
     // Monthly growth (simplified - you might want to add date filtering)

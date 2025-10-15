@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 // src\app\frontend\dashboard\lecturer\components\dashboard\EditCourseModal.tsx
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -45,7 +46,7 @@ export default function EditCourseModal({
     initialValues: {
       course_title: "",
       course_description: "",
-      course_level: "beginner",
+      course_level: "Beginner",
       category_id: "",
       course_price: 0,
       thumbnail: null as File | null,
@@ -72,7 +73,6 @@ export default function EditCourseModal({
         thumbnail: null, // Reset file input
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [course]);
 
   // Fetch categories when the modal opens
@@ -83,7 +83,7 @@ export default function EditCourseModal({
           const response = await fetch("/api/dashboard/lecturer/categories");
           if (!response.ok) throw new Error("Gagal memuat daftar kategori");
           const data = await response.json();
-          setCategories(data); // <-- Panggil setCategories di sini
+          setCategories(data);
         } catch (error) {
           notifications.show({
             title: "Gagal Memuat Kategori",
@@ -169,10 +169,9 @@ export default function EditCourseModal({
             {...form.getInputProps("course_description")}
           />
           <Group grow>
-            {/* List untuk level tetap ada sesuai permintaan */}
             <Select
               label="Level Kursus"
-              data={["beginner", "intermediate", "advanced"]}
+              data={["Beginner", "Intermediate", "Advanced"]}
               required
               {...form.getInputProps("course_level")}
             />
@@ -184,12 +183,6 @@ export default function EditCourseModal({
               {...form.getInputProps("category_id")}
             />
           </Group>
-          {/* <NumberInput
-            label="Harga Kursus (Rp)"
-            min={0}
-            required
-            {...form.getInputProps("course_price")}
-          /> */}
           {course?.thumbnail_url && (
             <div>
               <Text size="sm" fw={500}>

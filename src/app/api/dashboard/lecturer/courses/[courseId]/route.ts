@@ -47,11 +47,11 @@ export async function GET(
 // PUT: Untuk mengedit detail kursus ATAU hanya mengubah status publish
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { courseId: string } }
+  { params }: { params: Promise<{ courseId: string }> }
 ) {
   const session = await getServerSession(authOptions);
   const lecturerId = (session?.user as any)?.id;
-  const courseId = parseInt(params.courseId, 10);
+  const courseId = parseInt((await params).courseId, 10);
 
   if (!session || (session.user as any)?.role !== 'lecturer') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
@@ -83,7 +83,7 @@ export async function PUT(
       // Optional: update basic fields
       if (body.course_title) updateData.course_title = body.course_title;
       if (body.course_description) updateData.course_description = body.course_description;
-      if (body.course_level && ['beginner', 'intermediate', 'advanced'].includes(body.course_level)) {
+      if (body.course_level && ['Beginner', 'Intermediate', 'Advanced'].includes(body.course_level)) {
         updateData.course_level = body.course_level;
       }
       if (body.course_price !== undefined) {
@@ -108,7 +108,7 @@ export async function PUT(
       const formData = await req.formData();
       const courseTitle = formData.get('course_title') as string;
       const courseDescription = formData.get('course_description') as string;
-      const courseLevel = (formData.get('course_level') as string)?.toLowerCase();
+      const courseLevel = (formData.get('course_level') as string);
       const coursePriceStr = formData.get('course_price') as string;
       const categoryIdStr = formData.get('category_id') as string;
       const thumbnailFile = formData.get('thumbnail') as File | null;
@@ -124,7 +124,7 @@ export async function PUT(
         return NextResponse.json({ error: 'Invalid price or category ID' }, { status: 400 });
       }
 
-      if (!['beginner','intermediate','advanced'].includes(courseLevel)) {
+      if (!['Beginner','Intermediate','Advanced'].includes(courseLevel)) {
         return NextResponse.json({ error: 'Invalid course level' }, { status: 400 });
       }
 

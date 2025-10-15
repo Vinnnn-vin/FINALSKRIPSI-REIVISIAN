@@ -49,7 +49,7 @@ export function SearchFilters({
         leftSection={<IconFilter size={16} />}
         data={[
           { value: "all", label: "All Levels" },
-          { value: "beginner", label: "Beginner" },
+          { value: "Beginner", label: "Beginner" },
           { value: "intermediate", label: "Intermediate" },
           { value: "advanced", label: "Advanced" },
         ]}

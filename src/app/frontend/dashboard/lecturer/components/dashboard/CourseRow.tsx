@@ -54,11 +54,11 @@ export default function CourseRow({ course, setCourses, onCourseUpdated }: Cours
   // Helper functions for consistent display
   const getLevelConfig = (level: string) => {
     switch (level) {
-      case 'beginner':
+      case 'Beginner':
         return { label: 'Beginner', color: 'green', icon: '🌱' };
-      case 'intermediate': 
+      case 'Intermediate': 
         return { label: 'Intermediate', color: 'blue', icon: '📈' };
-      case 'advanced':
+      case 'Advanced':
         return { label: 'Advanced', color: 'orange', icon: '🚀' };
       default:
         return { label: 'Unknown', color: 'gray', icon: '❓' };

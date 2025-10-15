@@ -227,7 +227,7 @@ export async function GET(
               totalDurationMinutes % 60
             } menit`
           : `${totalDurationMinutes} menit`,
-      level: courseData.course_level || "beginner",
+      level: courseData.course_level || "Beginner",
       price: courseData.course_price || 0,
       originalPrice: courseData.course_price
         ? Math.round(courseData.course_price * 1.5)
@@ -258,7 +258,7 @@ export async function GET(
       requirements: [
         "Koneksi internet yang stabil",
         "Komputer atau smartphone untuk mengakses materi",
-        courseData.course_level === "beginner"
+        courseData.course_level === "Beginner"
           ? "Tidak memerlukan pengalaman sebelumnya"
           : courseData.course_level === "intermediate"
           ? "Pemahaman dasar mengenai topik terkait"
