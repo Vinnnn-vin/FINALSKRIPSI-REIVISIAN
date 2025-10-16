@@ -41,7 +41,7 @@ import {
 } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { useDisclosure } from "@mantine/hooks";
-import { ReviewModal } from "../../components/ReviewModal";
+import { ReviewModal } from "../../features/review/components/ReviewModal";
 
 const ReactPlayer = dynamic(() => import("react-player"), {
   ssr: false,
@@ -49,6 +49,7 @@ const ReactPlayer = dynamic(() => import("react-player"), {
 }) as any;
 
 interface MaterialDetail {
+  submission: any;
   material_detail_id: number;
   material_detail_name: string;
   material_detail_type: number;
@@ -168,7 +169,7 @@ export default function LearnPage() {
           message: "Your progress has been reset.",
           color: "blue",
         });
-        window.location.reload(); 
+        window.location.reload();
       } catch (err: any) {
         notifications.show({
           title: "Error",
@@ -1138,8 +1139,10 @@ export default function LearnPage() {
               <Stack gap="xs">
                 <Title order={3}>{data.course.course_title}</Title>
                 <Text size="sm" c="dimmed">
-                  By: {data.course.instructor.first_name}{" "}
-                  {data.course.instructor.last_name}
+                  By:{" "}
+                  {`${data.course.instructor?.first_name || ""} ${
+                    data.course.instructor?.last_name || ""
+                  }`.trim()}
                 </Text>
 
                 <Box>

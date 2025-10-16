@@ -24,7 +24,6 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 import { GoogleButton } from "@/app/frontend/components/GoogleButton";
-import { zodResolver } from "mantine-form-zod-resolver";
 import { LoginInput, loginSchema } from "@/validations/auth";
 
 export default function LoginPage() {
@@ -40,12 +39,12 @@ export default function LoginPage() {
 
   const form = useForm({
     initialValues: { email: "", password: "" },
-    // validate: {
-    //   email: (value) =>
-    //     /^\S+@\S+$/.test(value) ? null : "Format email tidak valid",
-    //   password: (value) => (value.length > 0 ? null : "Password harus diisi"),
-    // },
-    validate: zodResolver(loginSchema),
+    validate: {
+      email: (value) =>
+        /^\S+@\S+$/.test(value) ? null : "Format email tidak valid",
+      password: (value) => (value.length > 0 ? null : "Password harus diisi"),
+    },
+    // validate: zodResolver(loginSchema),
   });
 
   // Handle mounting animation

@@ -4,9 +4,8 @@
 
 import { Card, Image, Text, Group, Badge, Button, Stack } from '@mantine/core';
 import { useRouter } from 'next/navigation';
-import { getLevelColor, formatPrice, getInstructorName, getCourseImageUrl } from '../utils';
+import { getLevelColor, formatPrice, getInstructorName, getCourseImageUrl } from '../shared/utils';
 
-// [!] PERBAIKAN: Hapus 'isEnrolling' dan 'onEnroll' dari definisi props
 export function AvailableCourseCard({ course }: { course: any }) {
   const router = useRouter();
 

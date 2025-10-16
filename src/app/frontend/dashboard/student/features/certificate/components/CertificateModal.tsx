@@ -1,4 +1,6 @@
 // src\app\frontend\dashboard\student\components\CertificateModal.tsx
+// src\app\frontend\dashboard\student\features\certificate\components\CertificateModal.tsx
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable react/no-unescaped-entities */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
@@ -89,9 +91,9 @@ export function CertificateModal({
     }
   };
 
-  const handleReviewClick = () => {
-    onClose();
-  };
+  // const handleReviewClick = () => {
+  //   onClose();
+  // };
 
   return (
     <Modal

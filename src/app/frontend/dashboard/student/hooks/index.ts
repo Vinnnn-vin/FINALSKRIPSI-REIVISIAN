@@ -6,7 +6,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { notifications } from "@mantine/notifications";
 import { DashboardData } from "../stores/";
-import { filterCourses, debounce } from "../utils";
+import { filterCourses, debounce } from "../shared/utils";
 import { Course, EnrolledCourse } from "@/types";
 
 /**

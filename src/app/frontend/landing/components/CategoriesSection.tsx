@@ -2,23 +2,11 @@
 "use client";
 
 import React, { useState } from "react";
-import {
-  Container,
-  Stack,
-  Box,
-  Title,
-  Text,
-  Badge,
-  Grid,
-  GridCol,
-  Center,
-  Card,
-  Transition,
-  Button,
-} from "@mantine/core";
+import { Container, Stack, Box, Title, Text, Badge, Grid, GridCol, Center, Card, Transition, Button } from "@mantine/core";
 import { IconChevronRight, IconChevronDown } from "@tabler/icons-react";
 import Link from "next/link";
 import { CategoriesSectionProps } from "@/types/landing";
+import { useInView } from "react-intersection-observer"; // [ANIMATION] Import hook
 
 export const CategoriesSection: React.FC<CategoriesSectionProps> = ({
   categories,
@@ -26,6 +14,7 @@ export const CategoriesSection: React.FC<CategoriesSectionProps> = ({
   mounted,
 }) => {
   const [showAllCategories, setShowAllCategories] = useState(false);
+  const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 }); // [ANIMATION] Inisialisasi hook
 
   const getCategoryConfig = (categoryName: string) => {
     const configs: { [key: string]: { icon: string; gradient: string } } = {
@@ -69,7 +58,6 @@ export const CategoriesSection: React.FC<CategoriesSectionProps> = ({
     return configs[categoryName] || configs.default;
   };
 
-  // Sort categories by course count (descending) and limit display
   const sortedCategories = [...categories].sort(
     (a, b) => b.course_count - a.course_count
   );

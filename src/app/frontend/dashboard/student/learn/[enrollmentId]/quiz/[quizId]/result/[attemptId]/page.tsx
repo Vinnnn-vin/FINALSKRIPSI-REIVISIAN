@@ -20,7 +20,7 @@ import {
   Divider,
 } from "@mantine/core";
 import { IconAlertCircle, IconCheck, IconX, IconArrowLeft, IconRefresh } from "@tabler/icons-react";
-import { useLearningDashboard } from "@/app/frontend/dashboard/student/stores/useLearningDashboard";
+import { useLearningDashboard } from "@/app/frontend/dashboard/student/features/dashboard-overview/stores/useLearningDashboard";
 
 export default function QuizResultPage() {
   const router = useRouter();

@@ -1,4 +1,5 @@
 // src\app\frontend\dashboard\student\components\StatsCards.tsx
+// src\app\frontend\dashboard\student\features\dashboard-overview\components\StatsCards.tsx
 
 import {
   SimpleGrid,

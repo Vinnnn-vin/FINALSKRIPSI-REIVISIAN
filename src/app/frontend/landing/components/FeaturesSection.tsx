@@ -1,4 +1,3 @@
-// src\app\frontend\landing\components\FeaturesSection.tsx
 "use client";
 
 import React from "react";
@@ -11,6 +10,7 @@ import {
   Grid,
   GridCol,
   Card,
+  Transition,
 } from "@mantine/core";
 import {
   IconPlaystationCircle,
@@ -18,6 +18,7 @@ import {
   IconCertificate,
   IconShield,
 } from "@tabler/icons-react";
+import { useInView } from "react-intersection-observer"; // [ANIMATION] Import hook untuk deteksi scroll
 
 export const FeaturesSection: React.FC = () => {
   const features = [
@@ -43,6 +44,11 @@ export const FeaturesSection: React.FC = () => {
     },
   ];
 
+  const { ref, inView } = useInView({
+    triggerOnce: true, // Animasi hanya berjalan sekali
+    threshold: 0.2, // Memicu saat 20% komponen terlihat
+  });
+
   return (
     <Box
       style={{
@@ -51,7 +57,7 @@ export const FeaturesSection: React.FC = () => {
       py="xl"
     >
       <Container size="xl">
-        <Stack gap="xl">
+        <Stack gap="xl" ref={ref}>
           <Box ta="center">
             <Title order={2} fw={700} mb="sm" style={{ color: "#1a365d" }}>
               Mengapa Memilih Platform Kami?
@@ -64,51 +70,60 @@ export const FeaturesSection: React.FC = () => {
           <Grid>
             {features.map((feature, index) => (
               <GridCol key={index} span={{ base: 12, sm: 6, lg: 3 }}>
-                <Card
-                  radius="xl"
-                  p="xl"
-                  h="200px"
-                  style={{
-                    background: "white",
-                    border: "1px solid #e2e8f0",
-                    transition: "all 0.3s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-8px)";
-                    e.currentTarget.style.boxShadow =
-                      "0 20px 40px rgba(102, 126, 234, 0.1)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "";
-                  }}
+                <Transition
+                  mounted={inView}
+                  transition="fade-up"
+                  duration={500}
+                  timingFunction="ease-out"
+                  keepMounted
                 >
-                  <Stack align="center" gap="md">
-                    <Box
+                  {(styles) => (
+                    <Card
+                      radius="xl"
+                      p="xl"
+                      h="200px"
                       style={{
-                        background: "linear-gradient(135deg, #667eea, #764ba2)",
-                        padding: "16px",
-                        borderRadius: "50%",
-                        color: "white",
+                        ...styles,
+                        background: "white",
+                        border: "1px solid #e2e8f0",
+                        transitionProperty: "all",
+                        transitionDuration: "300ms",
+                        transitionTimingFunction: "ease",
                       }}
                     >
-                      <feature.icon size={28} />
-                    </Box>
-                    <Box ta="center">
-                      <Title
-                        order={4}
-                        fw={600}
-                        mb="xs"
-                        style={{ color: "#1a365d" }}
-                      >
-                        {feature.title}
-                      </Title>
-                      <Text size="sm" c="dimmed" style={{ lineHeight: 1.5 }}>
-                        {feature.desc}
-                      </Text>
-                    </Box>
-                  </Stack>
-                </Card>
+                      <Stack align="center" gap="md">
+                        <Box
+                          style={{
+                            background:
+                              "linear-gradient(135deg, #667eea, #764ba2)",
+                            padding: "16px",
+                            borderRadius: "50%",
+                            color: "white",
+                          }}
+                        >
+                          <feature.icon size={28} />
+                        </Box>
+                        <Box ta="center">
+                          <Title
+                            order={4}
+                            fw={600}
+                            mb="xs"
+                            style={{ color: "#1a365d" }}
+                          >
+                            {feature.title}
+                          </Title>
+                          <Text
+                            size="sm"
+                            c="dimmed"
+                            style={{ lineHeight: 1.5 }}
+                          >
+                            {feature.desc}
+                          </Text>
+                        </Box>
+                      </Stack>
+                    </Card>
+                  )}
+                </Transition>
               </GridCol>
             ))}
           </Grid>

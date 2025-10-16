@@ -44,7 +44,9 @@ export const CourseCard: React.FC<CourseCardProps> = ({
           style={{
             ...styles,
             overflow: "hidden",
-            transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+            transitionProperty: "all",
+    transitionDuration: "0.4s",
+    transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)",
             background: "white",
             cursor: "pointer",
             border: "1px solid #e2e8f0",

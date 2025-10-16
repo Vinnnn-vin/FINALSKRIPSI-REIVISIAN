@@ -21,7 +21,7 @@ import {
   getInstructorName,
   getCourseImageUrl,
   getCourseFallbackUrl,
-} from "../utils";
+} from "../shared/utils";
 
 interface CourseCardProps {
   course: Course;

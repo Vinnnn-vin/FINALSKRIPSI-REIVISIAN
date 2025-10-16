@@ -12,7 +12,7 @@ import {
   Quiz,
   StudentProgress,
   StudentQuizAnswer,
-  AssignmentSubmission 
+  AssignmentSubmission,
 } from "@/models";
 import { Op } from "sequelize";
 import sequelize from "@/lib/database";
@@ -39,8 +39,7 @@ export async function GET(
       );
     }
 
-    // 🔧 PERBAIKAN: Fetch ulang dari database untuk mendapatkan data terbaru
-    const enrollment = await Enrollment.findOne({
+    let enrollment = await Enrollment.findOne({
       where: { enrollment_id: enrollmentId, user_id: userId },
       include: [
         {
@@ -65,20 +64,60 @@ export async function GET(
       access_expires_at: enrollment.access_expires_at,
     });
 
-    // Check expiry
+    const courseId = (enrollment.toJSON() as any).course.course_id;
     const now = new Date();
     const expiryDate = enrollment.access_expires_at
       ? new Date(enrollment.access_expires_at)
       : null;
 
     if (expiryDate && expiryDate < now) {
-      return NextResponse.json(
-        { error: "Your access to this course has expired." },
-        { status: 403 }
-      );
-    }
+      const transaction = await sequelize.transaction();
+      try {
+        console.log(
+          `Access for enrollment ${enrollmentId} has expired. Resetting progress...`
+        );
 
-    const courseId = (enrollment.toJSON() as any).course.course_id;
+        await StudentProgress.destroy({
+          where: { user_id: userId, course_id: courseId },
+          transaction,
+        });
+        await StudentQuizAnswer.destroy({
+          where: { user_id: userId, course_id: courseId },
+          transaction,
+        });
+        await AssignmentSubmission.destroy({
+          where: { user_id: userId, course_id: courseId },
+          transaction,
+        });
+
+        await enrollment.update(
+          {
+            learning_started_at: null,
+            access_expires_at: null,
+            status: "active",
+            completed_at: null,
+          },
+          { transaction }
+        );
+
+        await transaction.commit();
+
+        enrollment = await Enrollment.findOne({
+          where: { enrollment_id: enrollmentId, user_id: userId },
+          include: [
+            {
+              model: Course,
+              as: "course",
+              required: true,
+              include: [{ model: User, as: "instructor" }],
+            },
+          ],
+        });
+      } catch (resetError) {
+        await transaction.rollback();
+        console.error("Failed to auto-reset progress:", resetError);
+      }
+    }
 
     const materials = await Material.findAll({
       where: { course_id: courseId },
@@ -191,12 +230,12 @@ export async function GET(
         user_id: userId,
         course_id: courseId,
       },
-      order: [['submitted_at', 'DESC']],
+      order: [["submitted_at", "DESC"]],
       raw: true, // Ambil sebagai plain object
     });
 
     const submissionMap = new Map();
-    submissions.forEach(sub => {
+    submissions.forEach((sub) => {
       // Hanya simpan submission terbaru untuk setiap tugas
       if (!submissionMap.has(sub.material_detail_id)) {
         submissionMap.set(sub.material_detail_id, sub);

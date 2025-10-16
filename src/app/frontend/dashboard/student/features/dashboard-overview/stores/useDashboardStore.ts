@@ -1,6 +1,5 @@
-// src\app\frontend\dashboard\student\stores\useDashboardStore.ts
+// src\app\frontend\dashboard\student\features\dashboard-overview\stores\useDashboardStore.ts
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { create } from "zustand";
 import { notifications } from "@mantine/notifications";
 import type { Course, EnrolledCourse } from "@/types/course";
@@ -23,32 +22,22 @@ interface DashboardData {
 }
 
 interface DashboardStore {
-  // State
   loading: boolean;
   error: string | null;
   dashboardData: DashboardData | null;
-  
-  // Raw data from API
   rawEnrolledCourses: EnrolledCourse[];
   rawAvailableCourses: Course[];
-  
-  // Computed/filtered data
   enrolledCourses: EnrolledCourse[];
   availableCourses: Course[];
   inProgressCourses: EnrolledCourse[];
-  
-  // Filters & UI state
   activeTab: string;
   searchTerm: string;
   filterLevel: string;
   sortBy: "title" | "price" | "level" | "progress";
   sortOrder: "asc" | "desc";
   enrollingCourseIds: Set<number>;
-  
-  // Computed properties
   hasActiveFilters: boolean;
   
-  // Actions
   fetchDashboardData: () => Promise<void>;
   handleEnroll: (courseId: number) => Promise<void>;
   setActiveTab: (tab: string) => void;
@@ -58,13 +47,10 @@ interface DashboardStore {
   setSortOrder: (order: "asc" | "desc") => void;
   handleClearFilters: () => void;
   isEnrolling: (courseId: number) => boolean;
-  
-  // Internal methods
   updateFilteredData: () => void;
 }
 
-const useDashboardStore = create<DashboardStore>((set, get) => ({
-  // Initial state
+export const useDashboardStore = create<DashboardStore>((set, get) => ({
   loading: false,
   error: null,
   dashboardData: null,
@@ -80,7 +66,6 @@ const useDashboardStore = create<DashboardStore>((set, get) => ({
   sortOrder: "asc",
   enrollingCourseIds: new Set(),
 
-  // Computed property
   get hasActiveFilters() {
     const state = get();
     return (
@@ -91,17 +76,14 @@ const useDashboardStore = create<DashboardStore>((set, get) => ({
     );
   },
 
-  // Update filtered data based on current filters
   updateFilteredData: () => {
     const state = get();
     const { rawEnrolledCourses, rawAvailableCourses, searchTerm, filterLevel, sortBy, sortOrder } = state;
 
-    // Helper function to filter courses
     const filterCourses = <T extends { course: Course }>(courses: T[]): T[] => {
       return courses.filter((item) => {
         const course = item.course;
         
-        // Search filter
         if (searchTerm.trim()) {
           const searchLower = searchTerm.toLowerCase();
           const matchesSearch = 
@@ -114,7 +96,6 @@ const useDashboardStore = create<DashboardStore>((set, get) => ({
           if (!matchesSearch) return false;
         }
 
-        // Level filter
         if (filterLevel !== "all" && course.course_level !== filterLevel) {
           return false;
         }
@@ -123,10 +104,8 @@ const useDashboardStore = create<DashboardStore>((set, get) => ({
       });
     };
 
-    // Helper function to filter available courses
     const filterAvailableCourses = (courses: Course[]): Course[] => {
       return courses.filter((course) => {
-        // Search filter
         if (searchTerm.trim()) {
           const searchLower = searchTerm.toLowerCase();
           const matchesSearch = 
@@ -139,7 +118,6 @@ const useDashboardStore = create<DashboardStore>((set, get) => ({
           if (!matchesSearch) return false;
         }
 
-        // Level filter
         if (filterLevel !== "all" && course.course_level !== filterLevel) {
           return false;
         }
@@ -148,7 +126,6 @@ const useDashboardStore = create<DashboardStore>((set, get) => ({
       });
     };
 
-    // Helper function to sort courses
     const sortCourses = <T extends { course: Course }>(courses: T[]): T[] => {
       return [...courses].sort((a, b) => {
         let aValue: any, bValue: any;
@@ -163,7 +140,7 @@ const useDashboardStore = create<DashboardStore>((set, get) => ({
             bValue = b.course.course_price || 0;
             break;
           case "level":
-            const levelOrder = { Beginner: 1, intermediate: 2, advanced: 3 };
+            const levelOrder = { beginner: 1, intermediate: 2, advanced: 3 };
             aValue = levelOrder[a.course.course_level as keyof typeof levelOrder] || 0;
             bValue = levelOrder[b.course.course_level as keyof typeof levelOrder] || 0;
             break;
@@ -185,7 +162,6 @@ const useDashboardStore = create<DashboardStore>((set, get) => ({
       });
     };
 
-    // Helper function to sort available courses
     const sortAvailableCourses = (courses: Course[]): Course[] => {
       return [...courses].sort((a, b) => {
         let aValue: any, bValue: any;
@@ -200,7 +176,7 @@ const useDashboardStore = create<DashboardStore>((set, get) => ({
             bValue = b.course_price || 0;
             break;
           case "level":
-            const levelOrder = { Beginner: 1, intermediate: 2, advanced: 3 };
+            const levelOrder = { beginner: 1, intermediate: 2, advanced: 3 };
             aValue = levelOrder[a.course_level as keyof typeof levelOrder] || 0;
             bValue = levelOrder[b.course_level as keyof typeof levelOrder] || 0;
             break;
@@ -222,11 +198,9 @@ const useDashboardStore = create<DashboardStore>((set, get) => ({
       });
     };
 
-    // Apply filters and sorting
     const filteredEnrolled = sortCourses(filterCourses(rawEnrolledCourses));
     const filteredAvailable = sortAvailableCourses(filterAvailableCourses(rawAvailableCourses));
     
-    // In progress courses (enrolled with progress < 100)
     const inProgress = filteredEnrolled.filter((enrollment) => {
       const progress = enrollment.course?.progress || 0;
       return progress > 0 && progress < 100;
@@ -239,7 +213,6 @@ const useDashboardStore = create<DashboardStore>((set, get) => ({
     });
   },
 
-  // Fetch dashboard data
   fetchDashboardData: async () => {
     set({ loading: true, error: null });
     
@@ -256,8 +229,6 @@ const useDashboardStore = create<DashboardStore>((set, get) => ({
       }
 
       const data: DashboardData = await response.json();
-      
-      console.log("API Response:", data);
 
       if (!data.user || !data.stats) {
         throw new Error("Invalid response format");
@@ -271,11 +242,9 @@ const useDashboardStore = create<DashboardStore>((set, get) => ({
         error: null,
       });
 
-      // Update filtered data after setting raw data
       get().updateFilteredData();
       
     } catch (error: any) {
-      console.error("Dashboard fetch error:", error);
       const errorMessage = error.message || "Failed to load dashboard data";
       
       set({
@@ -297,47 +266,27 @@ const useDashboardStore = create<DashboardStore>((set, get) => ({
     }
   },
 
-  // Handle course enrollment
   handleEnroll: async (courseId: number) => {
     const state = get();
     
-    // Prevent double enrollment
     if (state.enrollingCourseIds.has(courseId)) {
       return;
     }
 
-    // Add to enrolling set
     set(state => ({
       enrollingCourseIds: new Set(state.enrollingCourseIds.add(courseId))
     }));
 
     try {
-      // const response = await fetch("/api/courses/enroll", {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //   },
-      //   body: JSON.stringify({ course_id: courseId }),
-      // });
+      notifications.show({
+        title: "Success!",
+        message: "Successfully enrolled in course!",
+        color: "green",
+      });
 
-      // if (!response.ok) {
-      //   const errorData = await response.json();
-      //   throw new Error(errorData.error || `HTTP ${response.status}`);
-      // }
-
-      // const result = await response.json();
-      
-      // notifications.show({
-      //   title: "Success",
-      //   message: result.message || "Successfully enrolled in course!",
-      //   color: "green",
-      // });
-
-      // Refresh dashboard data
       await get().fetchDashboardData();
       
     } catch (error: any) {
-      console.error("Enrollment error:", error);
       const errorMessage = error.message || "Failed to enroll in course";
       
       notifications.show({
@@ -346,7 +295,6 @@ const useDashboardStore = create<DashboardStore>((set, get) => ({
         color: "red",
       });
     } finally {
-      // Remove from enrolling set
       set(state => {
         const newSet = new Set(state.enrollingCourseIds);
         newSet.delete(courseId);
@@ -355,7 +303,6 @@ const useDashboardStore = create<DashboardStore>((set, get) => ({
     }
   },
 
-  // UI Actions
   setActiveTab: (tab: string) => set({ activeTab: tab }),
   
   setSearchTerm: (term: string) => {
@@ -392,5 +339,3 @@ const useDashboardStore = create<DashboardStore>((set, get) => ({
     return get().enrollingCourseIds.has(courseId);
   },
 }));
-
-export { useDashboardStore };

@@ -4,7 +4,7 @@
 
 import { Card, Image, Text, Group, Badge, Button, Progress, Stack } from '@mantine/core';
 import { useRouter } from 'next/navigation';
-import { getLevelColor } from '../utils';
+import { getLevelColor } from '../shared/utils';
 
 interface EnrolledCourseCardProps {
   course: any;

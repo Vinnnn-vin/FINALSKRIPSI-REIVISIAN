@@ -13,6 +13,7 @@ import {
   Stack,
   Rating,
   Button,
+  Image,
 } from "@mantine/core";
 import {
   IconUsers,
@@ -48,7 +49,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
     }
 
     const imageUrl = course.image.trim();
-    
+
     // Handle different image URL formats
     if (imageUrl.startsWith("data:image/")) {
       return imageUrl;
@@ -166,22 +167,29 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
               />
             )}
 
-            {/* Default image as final fallback */}
             {imageSrc === "/SIGNIN.jpg" && (
-              <img
-                src="/SIGNIN.jpg"
+              <Image
+                src={course.image || "/SIGNIN.jpg"}
                 alt={course.title}
+                width={800} 
+                height={450} 
                 style={{
                   width: "100%",
-                  height: "100%",
+                  height: "auto", 
+                  aspectRatio: "16/9",
                   objectFit: "cover",
                   transition: "transform 0.3s ease",
+                  borderRadius: "0.5rem",
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = "scale(1.05)";
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = "scale(1)";
+                }}
+                onError={(e) => {
+                  // fallback manual kalau gambar gagal dimuat
+                  e.currentTarget.src = "/SIGNIN.jpg";
                 }}
               />
             )}

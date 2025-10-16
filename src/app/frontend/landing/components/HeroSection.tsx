@@ -1,6 +1,4 @@
-// src\app\frontend\landing\components\HeroSection.tsx
 "use client";
-
 import React from "react";
 import {
   Box,
@@ -14,7 +12,7 @@ import {
   Group,
   Transition,
 } from "@mantine/core";
-import { IconChevronRight, IconTrophy } from "@tabler/icons-react";
+import { IconChevronRight } from "@tabler/icons-react";
 import Link from "next/link";
 import Image from "next/image";
 import { HeroSectionProps } from "@/types/landing";
@@ -72,6 +70,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ mounted }) => {
       <Container size="xl" style={{ position: "relative", zIndex: 1 }}>
         <Grid align="center">
           <GridCol span={{ base: 12, lg: 6 }}>
+            {/* [ANIMATION] Menggunakan Transition untuk efek slide-up saat halaman dimuat */}
             <Transition mounted={mounted} transition="slide-up" duration={800}>
               {(styles) => (
                 <Box style={styles}>
@@ -102,7 +101,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ mounted }) => {
                   >
                     Transformasi Karir Dimulai dari{" "}
                     <Text span c="orange" inherit>
-                      Sini
+                      {" "}
+                      Sini{" "}
                     </Text>
                   </Title>
                   <Text
@@ -130,36 +130,12 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ mounted }) => {
                         background: "linear-gradient(45deg, #ff6b35, #f7931e)",
                         border: "none",
                         boxShadow: "0 8px 25px rgba(255,107,53,0.4)",
-                        transform: "scale(1)",
                         transition: "all 0.3s ease",
                       }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform =
-                          "translateY(-2px) scale(1.05)";
-                        e.currentTarget.style.boxShadow =
-                          "0 12px 35px rgba(255,107,53,0.5)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = "scale(1)";
-                        e.currentTarget.style.boxShadow =
-                          "0 8px 25px rgba(255,107,53,0.4)";
-                      }}
                     >
-                      Mulai Belajar Gratis
+                      Mulai Belajar
                     </Button>
-                    <Button
-                      size="xl"
-                      variant="outline"
-                      color="white"
-                      radius="xl"
-                      style={{
-                        borderWidth: "2px",
-                        backdropFilter: "blur(10px)",
-                        background: "rgba(255,255,255,0.1)",
-                      }}
-                    >
-                      Tonton Demo
-                    </Button>
+                    {/* [REMOVED] Tombol "Tonton Demo" dihapus */}
                   </Group>
                 </Box>
               )}
@@ -188,25 +164,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ mounted }) => {
                       height: "auto",
                     }}
                   />
-                  <Box
-                    style={{
-                      position: "absolute",
-                      top: "-20px",
-                      right: "-20px",
-                      background: "rgba(255,255,255,0.95)",
-                      padding: "16px",
-                      borderRadius: "16px",
-                      boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
-                      backdropFilter: "blur(10px)",
-                    }}
-                  >
-                    <Group gap="xs">
-                      <IconTrophy size={20} color="#ff6b35" />
-                      <Text fw={600} size="sm">
-                        50k+ Lulusan
-                      </Text>
-                    </Group>
-                  </Box>
                 </Box>
               )}
             </Transition>

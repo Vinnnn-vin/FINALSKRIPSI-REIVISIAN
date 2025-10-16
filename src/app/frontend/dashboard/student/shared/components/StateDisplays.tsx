@@ -1,4 +1,4 @@
-// src\app\frontend\dashboard\student\components\StateDisplays.tsx
+// src\app\frontend\dashboard\student\shared\components\StateDisplays.tsx
 "use client";
 
 import { Center, Loader, Stack, Text, Button, Group } from "@mantine/core";
@@ -18,9 +18,6 @@ interface EmptyStateProps {
   onRefresh?: () => void;
 }
 
-/**
- * Komponen untuk menampilkan error.
- */
 export function ErrorState({ message, onRetry, onGoHome }: ErrorStateProps) {
   return (
     <Center h="100%" py="xl">
@@ -44,9 +41,6 @@ export function ErrorState({ message, onRetry, onGoHome }: ErrorStateProps) {
   );
 }
 
-/**
- * Komponen untuk menampilkan kondisi kosong (no data) dengan berbagai skenario.
- */
 export function EmptyState({ type, searchTerm, onBrowseCourses, onClearFilters, onRefresh }: EmptyStateProps) {
   const content = {
     'no-enrolled': {
@@ -87,9 +81,6 @@ export function EmptyState({ type, searchTerm, onBrowseCourses, onClearFilters, 
   );
 }
 
-/**
- * Komponen untuk menampilkan loading.
- */
 export function LoadingState({ message }: { message?: string }) {
   return (
     <Center h="100%" py="xl">

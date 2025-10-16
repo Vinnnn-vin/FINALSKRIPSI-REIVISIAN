@@ -59,7 +59,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Hash password
     let password_hash: string;
     try {
       password_hash = await bcrypt.hash(password, 12);

@@ -153,14 +153,13 @@ export async function POST(
   }
 }
 
-// [FIX] TAMBAHKAN FUNGSI PUT UNTUK MEMPERBARUI KURIKULUM (UPDATE)
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { courseId: string } }
+  { params }: { params: Promise<{ courseId: string }> }
 ) {
   const session = await getServerSession(authOptions);
   const lecturerId = (session?.user as any)?.id;
-  const courseId = parseInt(params.courseId, 10);
+  const courseId = parseInt((await params).courseId, 10);
 
   if (!session || (session.user as any)?.role !== "lecturer") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });

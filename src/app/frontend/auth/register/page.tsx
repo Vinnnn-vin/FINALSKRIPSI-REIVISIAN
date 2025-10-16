@@ -23,8 +23,6 @@ import NextImage from "next/image";
 import { IconAlertCircle, IconCheck } from "@tabler/icons-react";
 import { signIn, useSession } from "next-auth/react";
 import { GoogleButton } from "@/app/frontend/components/GoogleButton";
-import { zodResolver } from "mantine-form-zod-resolver";
-import { registerSchema } from "@/validations/auth";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -43,7 +41,6 @@ export default function RegisterPage() {
       password: "",
       confirmPassword: "",
     },
-    validate: zodResolver(registerSchema),
   });
 
   useEffect(() => {

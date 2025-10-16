@@ -1,10 +1,12 @@
 // src/app/frontend/dashboard/student/components/TabContent.tsx
+// src\app\frontend\dashboard\student\features\dashboard-overview\components\TabContent.tsx
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { Tabs, SimpleGrid, Grid, Stack, Title, Card, Text } from '@mantine/core';
-import { EnrolledCourseCard } from './EnrolledCourseCard';
-import { AvailableCourseCard } from './AvailableCourseCard';
+import { EnrolledCourseCard } from '../../../components/EnrolledCourseCard';
+import { AvailableCourseCard } from '../../../components/AvailableCourseCard';
 
 export default function TabContent({
   activeTab,
