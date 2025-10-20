@@ -305,7 +305,6 @@ QuizQuestion.belongsTo(Quiz, {
   as: "quiz",
 });
 
-// Quiz <-> QuizAnswerOption (direct relationship for some operations)
 Quiz.hasMany(QuizAnswerOption, {
   foreignKey: "quiz_id",
   as: "answerOptions",

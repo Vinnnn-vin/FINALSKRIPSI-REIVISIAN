@@ -198,6 +198,63 @@ export default function LearnPage() {
   };
 
   // 🔧 PERBAIKAN: Fungsi untuk fetch data (tanpa auto-select item)
+  // const fetchData = useCallback(async () => {
+  //   if (!enrollmentId) return;
+
+  //   setLoading(true);
+  //   setError(null);
+
+  //   try {
+  //     const response = await fetch(
+  //       `/api/dashboard/student/learn/${enrollmentId}`
+  //     );
+
+  //     if (response.status === 403) {
+  //       const errData = await response.json();
+  //       throw new Error(errData.error || "Access has expired.");
+  //     }
+
+  //     if (!response.ok) throw new Error("Failed to load learning data");
+
+  //     const result: LearningData = await response.json();
+  //     if (result?.course?.materials) {
+  //       result.course.materials.forEach((material: any) => {
+  //         material.quizzes?.forEach((quiz: any) => {
+  //           if (
+  //             quiz.attempts &&
+  //             Array.isArray(quiz.attempts) &&
+  //             quiz.attempts.length > 0
+  //           ) {
+  //             // Urutkan berdasarkan attempt_number DESC
+  //             const sortedAttempts = [...quiz.attempts].sort(
+  //               (a, b) => b.attempt_number - a.attempt_number
+  //             );
+  //             quiz.last_attempt = sortedAttempts[0]; // ambil yang terakhir
+  //           } else if (!quiz.last_attempt) {
+  //             quiz.last_attempt = null;
+  //           }
+  //         });
+  //       });
+  //     }
+
+  //     setData(result);
+  //     console.log("📊 Learning data loaded, checking quiz attempts...");
+  //     result.course.materials.forEach((m) =>
+  //       m.quizzes?.forEach((q) =>
+  //         console.log(`Quiz ${q.quiz_id}: last_attempt =`, q.last_attempt)
+  //       )
+  //     );
+
+  //     return result;
+  //   } catch (err: any) {
+  //     setError(err.message || "An error occurred");
+  //     return null;
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }, [enrollmentId]);
+
+  // ✅ FIXED + DEBUG
   const fetchData = useCallback(async () => {
     if (!enrollmentId) return;
 
@@ -217,11 +274,51 @@ export default function LearnPage() {
       if (!response.ok) throw new Error("Failed to load learning data");
 
       const result: LearningData = await response.json();
-      if (!result?.course) throw new Error("Invalid learning data");
+
+      console.log("=== DEBUG FETCH LEARNING DATA ===");
+      console.log("Raw course data:", result?.course);
+
+      if (result?.course?.materials?.length) {
+        result.course.materials.forEach((material: any) => {
+          if (material.quizzes?.length) {
+            material.quizzes.forEach((quiz: any) => {
+              console.log(`\n🧩 Quiz ID: ${quiz.quiz_id} - ${quiz.quiz_title}`);
+              console.log("Attempts from API:", quiz.attempts);
+              console.log("Last attempt before sort:", quiz.last_attempt);
+
+              if (
+                quiz.attempts &&
+                Array.isArray(quiz.attempts) &&
+                quiz.attempts.length > 0
+              ) {
+                // urutkan dari attempt terakhir
+                quiz.attempts.sort(
+                  (a: any, b: any) => b.attempt_number - a.attempt_number
+                );
+                quiz.last_attempt = quiz.attempts[0];
+              } else {
+                quiz.last_attempt = quiz.last_attempt || null;
+              }
+
+              console.log(
+                "✅ Last attempt after processing:",
+                quiz.last_attempt
+              );
+            });
+          } else {
+            console.log(`📦 Material ${material.material_id} has no quizzes`);
+          }
+        });
+      } else {
+        console.warn("⚠️ No materials found in course data");
+      }
+
+      console.log("=== END DEBUG FETCH ===");
 
       setData(result);
-      return result; // Return data untuk digunakan di useEffect
+      return result;
     } catch (err: any) {
+      console.error("❌ Fetch Error:", err);
       setError(err.message || "An error occurred");
       return null;
     } finally {

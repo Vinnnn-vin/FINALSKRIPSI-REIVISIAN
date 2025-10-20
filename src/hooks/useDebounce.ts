@@ -11,7 +11,6 @@ export const useDebounce = <T>(value: T, delay: number): T => {
       setDebouncedValue(value);
     }, delay);
     
-    // Cleanup timeout jika value berubah sebelum delay selesai
     return () => {
       clearTimeout(handler);
     };

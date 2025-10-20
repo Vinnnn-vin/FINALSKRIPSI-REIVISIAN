@@ -151,12 +151,26 @@ const ManageMaterialsPage = () => {
             title: quiz.quiz_title,
             name: quiz.quiz_title,
             description: quiz.quiz_description,
-            questions: [],
+            passing_score: quiz.passing_score,
+            time_limit: quiz.time_limit,
+            max_attempts: quiz.max_attempts,
+            questions: (quiz.questions || []).map((q: any) => ({
+              id: `question-${q.question_id}`,
+              text: q.question_text,
+              type: q.type || "multiple_choice",
+              options: (q.answerOptions || []).map((opt: any) => ({
+                id: `option-${opt.option_id}`,
+                text: opt.option_text,
+                is_correct: opt.is_correct,
+              })),
+            })),
           })),
         ],
       }));
       setMaterials(transformedMaterials);
       setIsDraft(false); // Tandai bukan draf karena dari API
+      console.log("Quiz data mapped:", JSON.stringify(materials, null, 2));
+
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -198,13 +212,24 @@ const ManageMaterialsPage = () => {
 
   const handleOpenContentModal = (babId: string, content?: ContentItemType) => {
     setEditingBabId(babId);
+
     if (content) {
       setEditingContent(content);
-      setActiveTabInModal(content.type);
+
+      // otomatis buka tab sesuai tipe konten
+      if (content.type === "quiz") {
+        setActiveTabInModal("quiz");
+      } else if (content.type === "assignment") {
+        setActiveTabInModal("assignment");
+      } else {
+        setActiveTabInModal("lesson");
+      }
     } else {
+      // jika tambah baru, tetap default ke pelajaran
       setEditingContent(null);
       setActiveTabInModal("lesson");
     }
+
     openModal();
   };
 
@@ -455,9 +480,18 @@ const ManageMaterialsPage = () => {
       >
         <Tabs value={activeTabInModal} onChange={setActiveTabInModal}>
           <Tabs.List>
-            <Tabs.Tab value="lesson">Pelajaran</Tabs.Tab>
-            <Tabs.Tab value="quiz">Kuis</Tabs.Tab>
-            <Tabs.Tab value="assignment">Tugas</Tabs.Tab>
+            <Tabs.Tab value="lesson" disabled={activeTabInModal !== "lesson"}>
+              Pelajaran
+            </Tabs.Tab>
+            <Tabs.Tab value="quiz" disabled={activeTabInModal !== "quiz"}>
+              Kuis
+            </Tabs.Tab>
+            <Tabs.Tab
+              value="assignment"
+              disabled={activeTabInModal !== "assignment"}
+            >
+              Tugas
+            </Tabs.Tab>
           </Tabs.List>
 
           <Tabs.Panel value="lesson" pt="md">
@@ -484,7 +518,6 @@ const ManageMaterialsPage = () => {
           </Tabs.Panel>
         </Tabs>
       </Modal>
-
       <Container size="lg" py="xl">
         <Stack gap="xl">
           <Breadcrumbs separator={<IconChevronRight size={14} />}>

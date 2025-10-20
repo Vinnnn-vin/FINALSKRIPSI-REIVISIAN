@@ -6,10 +6,8 @@ import {
   Course, 
   EnrolledCourse, 
   User,
-  // Removed unused imports: CourseLevel, EnrollmentStatus
 } from '@/types';
 
-// Rest of the interfaces remain the same
 interface DashboardData {
   user: User;
   enrolledCourses: EnrolledCourse[];
@@ -223,7 +221,6 @@ export const useDashboard = (): UseDashboardReturn => {
     setFilterLevel('all');
   }, []);
 
-  // Computed values
   const filteredEnrolled = useMemo(() => {
     if (!data?.enrolledCourses) return [];
     return filterCourses(data.enrolledCourses, debouncedSearchTerm, filterLevel);

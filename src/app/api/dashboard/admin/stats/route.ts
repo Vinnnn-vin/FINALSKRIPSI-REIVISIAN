@@ -12,7 +12,6 @@ import { QueryTypes } from "sequelize";
 
 export async function GET() {
   try {
-    // Check if user is admin
     const session = await getServerSession(authOptions);
     if (!session?.user || (session.user as any)?.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });

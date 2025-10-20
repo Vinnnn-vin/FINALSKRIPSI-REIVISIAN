@@ -14,7 +14,7 @@ import {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { enrollmentId: string; quizId: string } }
+  { params }: { params: Promise<{ enrollmentId: string; quizId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -23,8 +23,8 @@ export async function GET(
     }
 
     const userId = parseInt((session.user as any).id);
-    const enrollmentId = parseInt(params.enrollmentId);
-    const quizId = parseInt(params.quizId);
+    const enrollmentId = parseInt((await params).enrollmentId);
+    const quizId = parseInt((await params).quizId);
 
     if (isNaN(userId) || isNaN(enrollmentId) || isNaN(quizId)) {
       return NextResponse.json({ error: "Invalid parameters" }, { status: 400 });

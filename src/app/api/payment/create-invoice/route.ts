@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
       description: `Payment for course: ${courseData.course_title || courseData.title}`,
       success_redirect_url: `${baseUrl}/frontend/dashboard/student?payment=success&courseId=${courseId}&externalId=${externalId}`,
       failure_redirect_url: `${baseUrl}/frontend/dashboard/student?payment=failed&courseId=${courseId}`,
-      invoice_duration: 86400, // 24 hours
+      invoice_duration: 86400, 
     };
 
     console.log("Creating Xendit invoice with payload:", invoicePayload);

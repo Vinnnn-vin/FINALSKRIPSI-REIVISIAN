@@ -203,11 +203,21 @@ export default function QuizBuilder({
                 />
                 <Select
                   value={q.type}
-                  onChange={(v) => updateQuestionType(qi, v as any)}
                   data={[
                     { value: "multiple_choice", label: "Pilihan Ganda" },
                     { value: "checkbox", label: "Checkbox" },
                   ]}
+                  onChange={(value) => {
+                    if (value)
+                      updateQuestionType(
+                        qi,
+                        value as "multiple_choice" | "checkbox"
+                      );
+                  }}
+                  onDropdownClose={() => {
+                    // Trigger ulang update jika user menutup dropdown tanpa mengubah value (klik ulang opsi sama)
+                    updateQuestionType(qi, q.type);
+                  }}
                 />
                 <ActionIcon color="red" onClick={() => removeQuestion(qi)}>
                   <IconTrash size={16} />

@@ -86,7 +86,7 @@ const AdminDashboard = () => {
         defaultValue="overview"
         variant="pills"
         radius="md"
-        keepMounted={false} // opsional: biar panel tidak render semua sekaligus
+        keepMounted={false} 
       >
         <Tabs.List mb="md">
           <Tabs.Tab value="overview">Overview</Tabs.Tab>

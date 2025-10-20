@@ -61,19 +61,25 @@ export function useQuizBuilder() {
   };
 
   const toggleCorrectOption = (qIndex: number, oIndex: number) => {
-    const updated = [...questions];
-    const q = updated[qIndex];
+  const updated = [...questions];
+  const q = updated[qIndex];
 
-    if (q.type === "multiple_choice") {
-      q.options.forEach((opt, i) => {
-        opt.is_correct = i === oIndex;
-      });
-    } else {
-      q.options[oIndex].is_correct = !q.options[oIndex].is_correct;
+  if (q.type === "multiple_choice") {
+    // Hanya satu benar
+    q.options.forEach((opt, i) => {
+      opt.is_correct = i === oIndex;
+    });
+  } else {
+    // Checkbox: bisa lebih dari satu benar
+    // Tidak bisa menonaktifkan opsi yang sudah benar
+    if (!q.options[oIndex].is_correct) {
+      q.options[oIndex].is_correct = true;
     }
+  }
 
-    setQuestions(updated);
-  };
+  setQuestions(updated);
+};
+
 
   const updateOptionText = (qIndex: number, oIndex: number, text: string) => {
     const updated = [...questions];

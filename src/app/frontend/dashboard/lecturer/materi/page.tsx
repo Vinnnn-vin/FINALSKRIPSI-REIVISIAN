@@ -175,6 +175,27 @@ export default function AddMaterialPage() {
           babs={babs}
           setBabs={setBabs}
           onOpenContentModal={handleOpenContentModal}
+          onRemoveBab={(babId) =>
+            setBabs((prev) => prev.filter((b) => b.id !== babId))
+          }
+          onRemoveContent={(babId, contentId) =>
+            setBabs((prev) =>
+              prev.map((b) =>
+                b.id === babId
+                  ? {
+                      ...b,
+                      items: b.items.filter((item) => item.id !== contentId),
+                    }
+                  : b
+              )
+            )
+          }
+          editingItemId={null}
+          inlineFormData={{ name: "", description: "" }}
+          setInlineFormData={() => {}}
+          onSaveInlineEdit={() => {}}
+          onCancelInlineEdit={() => {}}
+          onStartInlineEdit={() => {}}
         />
 
         {/* Form untuk Menambah Bab Baru */}

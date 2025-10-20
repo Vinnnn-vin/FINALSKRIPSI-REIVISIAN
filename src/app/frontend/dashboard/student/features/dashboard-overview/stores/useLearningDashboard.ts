@@ -1,6 +1,4 @@
-// src\app\frontend\dashboard\student\stores\useLearningDashboard.ts
-// src\app\frontend\dashboard\student\features\dashboard-overview\stores\useLearningDashboard.ts
-
+// src/app/frontend/dashboard/student/features/dashboard-overview/stores/useLearningDashboard.ts
 import { create } from "zustand";
 
 interface QuizResult {
@@ -12,7 +10,9 @@ interface QuizResult {
   detailedResults: {
     question_id: number;
     text: string;
-    selected_option: number | null;
+    selected_option: number | number[] | null;
+    question_type?: string;
+    is_correct?: boolean;
     options: { id: number; text: string; is_correct: boolean }[];
   }[];
 }
@@ -27,7 +27,7 @@ interface LearningDashboardState {
     quizId: string | number,
     attemptId: string | number
   ) => Promise<QuizResult | null>;
-  
+
   clearError: () => void;
   clearResult: () => void;
 }
@@ -39,51 +39,51 @@ export const useLearningDashboard = create<LearningDashboardState>((set, get) =>
 
   fetchQuizResult: async (enrollmentId, quizId, attemptId) => {
     set({ loading: true, error: null });
-    
+
     try {
-      console.log('Fetching quiz result:', { enrollmentId, quizId, attemptId });
-      
+      console.log("🔍 Fetching quiz result:", { enrollmentId, quizId, attemptId });
+
+      // ✅ FIX: gunakan endpoint result, bukan submit
       const res = await fetch(
         `/api/dashboard/student/learn/${encodeURIComponent(
           String(enrollmentId)
-        )}/quiz/submit?quizId=${encodeURIComponent(String(quizId))}&attemptId=${encodeURIComponent(String(attemptId))}`,
+        )}/quiz/result?quizId=${encodeURIComponent(String(quizId))}&attemptId=${encodeURIComponent(String(attemptId))}`,
         {
-          method: 'GET',
+          method: "GET",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
-          cache: 'no-cache', // FIX: Prevent caching issues
+          cache: "no-store", // pastikan tidak ambil cache
         }
       );
 
-      console.log('Response status:', res.status);
+      console.log("📡 Response status:", res.status);
 
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({ error: `HTTP ${res.status}: ${res.statusText}` }));
+        const errorData = await res.json().catch(() => ({
+          error: `HTTP ${res.status}: ${res.statusText}`,
+        }));
         throw new Error(errorData.error || `Failed to fetch quiz result: ${res.statusText}`);
       }
 
       const data = await res.json();
-      console.log('Quiz result data:', data);
+      console.log("✅ Quiz result data received:", data);
 
-      // FIX: Validate the response data structure
-      if (!data || typeof data !== 'object') {
-        throw new Error('Invalid response format');
+      if (!data || typeof data !== "object") {
+        throw new Error("Invalid response format from server");
       }
 
       if (!data.quiz || !data.detailedResults) {
-        console.warn('Missing expected fields in response:', data);
-        throw new Error('Incomplete quiz result data');
+        console.warn("⚠️ Incomplete quiz result data:", data);
+        throw new Error("Incomplete quiz result data received");
       }
 
       set({ quizResult: data, loading: false, error: null });
       return data;
     } catch (err) {
-      console.error("fetchQuizResult error:", err);
-      const errorMessage = err instanceof Error 
-        ? err.message 
-        : "Failed to fetch quiz result";
-      
+      console.error("❌ fetchQuizResult error:", err);
+      const errorMessage = err instanceof Error ? err.message : "Failed to fetch quiz result";
+
       set({
         error: errorMessage,
         loading: false,
@@ -94,6 +94,6 @@ export const useLearningDashboard = create<LearningDashboardState>((set, get) =>
   },
 
   clearError: () => set({ error: null }),
-  
+
   clearResult: () => set({ quizResult: null, error: null, loading: false }),
 }));
